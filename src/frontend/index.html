@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ludex — Play to Learn. Earn to Grow.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0c0c1d;
+      --bg-card: #13132b;
+      --bg-card-hover: #1a1a3e;
+      --purple: #8b5cf6;
+      --pink: #ec4899;
+      --orange: #f97316;
+      --cyan: #06b6d4;
+      --green: #22c55e;
+      --gold: #fbbf24;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --text-bright: #ffffff;
+      --gradient-main: linear-gradient(135deg, #8b5cf6, #ec4899, #f97316);
+      --gradient-subtle: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(236,72,153,0.15), rgba(249,115,22,0.15));
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ---- Utility ---- */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .gradient-text {
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--purple);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      color: var(--text-bright);
+    }
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      max-width: 620px;
+      line-height: 1.7;
+    }
+
+    /* ---- Floating Particles Canvas ---- */
+    #particles-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ---- Navbar ---- */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      transition: background 0.3s, backdrop-filter 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(12,12,29,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(139,92,246,0.1);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 32px; align-items: center; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-bright); }
+    .nav-cta {
+      background: var(--gradient-main);
+      color: #fff !important;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 600 !important;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(139,92,246,0.4);
+    }
+    .mobile-toggle {
+      display: none;
+      background: none; border: none;
+      color: var(--text); font-size: 1.5rem; cursor: pointer;
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      z-index: 1;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -20%; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(236,72,153,0.08) 40%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 50px;
+      background: rgba(139,92,246,0.12);
+      border: 1px solid rgba(139,92,246,0.25);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--purple);
+      margin-bottom: 32px;
+      animation: fadeInUp 0.8s ease;
+    }
+    .hero-badge .dot {
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.8s ease 0.1s both;
+    }
+    .hero h1 .line2 {
+      display: block;
+    }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-dim);
+      max-width: 580px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s ease 0.3s both;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 16px 36px;
+      background: var(--gradient-main);
+      color: #fff;
+      border: none; border-radius: 50px;
+      font-family: inherit;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(139,92,246,0.45);
+    }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 16px 36px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* ---- Stats Bar ---- */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      padding: 40px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+    }
+    .stat-item h3 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+    }
+    .stat-item p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ---- Problem Section ---- */
+    .problem {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+    }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .problem-visual {
+      position: relative;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .problem-circle {
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(236,72,153,0.2), rgba(249,115,22,0.1), transparent);
+      border: 1px solid rgba(236,72,153,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      animation: float 6s ease-in-out infinite;
+    }
+    .problem-circle .big-num {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .problem-circle span {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-top: 8px;
+      text-align: center;
+      max-width: 160px;
+    }
+    .problem-cards { display: flex; flex-direction: column; gap: 16px; margin-top: 40px; }
+    .problem-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: border-color 0.3s;
+    }
+    .problem-card:hover { border-color: rgba(236,72,153,0.2); }
+    .problem-card .icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(236,72,153,0.1);
+      border-radius: 10px;
+    }
+    .problem-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; color: var(--text-bright); }
+    .problem-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
+
+    /* ---- Solution / How it Works ---- */
+    .solution {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+    }
+    .solution .section-header { text-align: center; margin-bottom: 80px; }
+    .solution .section-subtitle { margin: 0 auto; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    .step-card {
+      position: relative;
+      padding: 40px 32px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+      overflow: hidden;
+    }
+    .step-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .step-card:nth-child(1)::before { background: var(--purple); }
+    .step-card:nth-child(2)::before { background: var(--pink); }
+    .step-card:nth-child(3)::before { background: var(--orange); }
+    .step-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139,92,246,0.15);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      font-size: 1.2rem; font-weight: 800;
+      margin-bottom: 24px;
+    }
+    .step-card:nth-child(1) .step-num { background: rgba(139,92,246,0.15); color: var(--purple); }
+    .step-card:nth-child(2) .step-num { background: rgba(236,72,153,0.15); color: var(--pink); }
+    .step-card:nth-child(3) .step-num { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .step-card h3 {
+      font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 12px; color: var(--text-bright);
+    }
+    .step-card p { font-size: 0.9rem; color: var(--text-dim); line-height: 1.65; }
+    .step-card .step-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* ---- Mechanics ---- */
+    .mechanics {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+    }
+    .mechanics .section-header { text-align: center; margin-bottom: 64px; }
+    .mechanics .section-subtitle { margin: 0 auto; }
+    .mechanics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .mechanic-card {
+      padding: 32px 28px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: transform 0.3s, border-color 0.3s;
+      cursor: default;
+    }
+    .mechanic-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(139,92,246,0.2);
+    }
+    .mechanic-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .mechanic-card h4 {
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 6px; color: var(--text-bright);
+    }
+    .mechanic-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 0.7rem; font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    .tag-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+    .tag-pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+    .tag-orange { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .tag-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+    .tag-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .mechanic-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.55; }
+
+    /* ---- Earn Section ---- */
+    .earn {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+    }
+    .earn-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .earn-features { display: flex; flex-direction: column; gap: 28px; margin-top: 36px; }
+    .earn-feature {
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .earn-feature .ef-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .earn-feature h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; color: var(--text-bright); }
+    .earn-feature p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.55; }
+
+    /* XP bar animation */
+    .xp-bar-demo {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .xp-player {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+    }
+    .xp-avatar {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: var(--gradient-main);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 800; color: #fff;
+    }
+    .xp-info h4 { font-size: 1rem; font-weight: 700; color: var(--text-bright); }
+    .xp-info span { font-size: 0.8rem; color: var(--text-dim); }
+    .xp-track {
+      width: 100%;
+      height: 12px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .xp-fill {
+      height: 100%;
+      border-radius: 50px;
+      background: var(--gradient-main);
+      width: 0%;
+      transition: width 2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .xp-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.75rem; color: var(--text-dim); margin-bottom: 28px;
+    }
+    .xp-rewards { display: flex; flex-direction: column; gap: 12px; }
+    .xp-reward {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+    }
+    .xp-reward .rw-left { display: flex; align-items: center; gap: 10px; }
+    .xp-reward .rw-left span:first-child { font-size: 1.1rem; }
+    .xp-reward .rw-left span:last-child { font-size: 0.85rem; font-weight: 500; }
+    .xp-reward .rw-right {
+      font-size: 0.8rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 50px;
+    }
+    .rw-earned { background: rgba(34,197,94,0.12); color: var(--green); }
+    .rw-locked { background: rgba(148,163,184,0.1); color: var(--text-dim); }
+
+    /* ---- Leaderboard ---- */
+    .leaderboard {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+    }
+    .leaderboard .section-header { text-align: center; margin-bottom: 64px; }
+    .leaderboard .section-subtitle { margin: 0 auto; }
+    .leaderboard-table {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+    .lb-header, .lb-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 120px 120px;
+      align-items: center;
+      padding: 16px 28px;
+    }
+    .lb-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .lb-row {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: background 0.2s;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row:hover { background: rgba(139,92,246,0.05); }
+    .lb-rank {
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+    .lb-rank.gold { color: var(--gold); }
+    .lb-rank.silver { color: #c0c0c0; }
+    .lb-rank.bronze { color: #cd7f32; }
+    .lb-player {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .lb-player-avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; color: #fff;
+    }
+    .lb-player-name { font-size: 0.9rem; font-weight: 600; color: var(--text-bright); }
+    .lb-player-tag { font-size: 0.7rem; color: var(--text-dim); }
+    .lb-xp { font-weight: 700; font-size: 0.9rem; }
+    .lb-tokens { font-weight: 700; font-size: 0.9rem; color: var(--gold); }
+
+    /* ---- CTA ---- */
+    .cta {
+      position: relative;
+      z-index: 1;
+      padding: 120px 0;
+      text-align: center;
+    }
+    .cta-box {
+      position: relative;
+      padding: 80px 60px;
+      border-radius: 24px;
+      background: var(--bg-card);
+      border: 1px solid rgba(139,92,246,0.15);
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 100%, rgba(139,92,246,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .cta-box h2 {
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .cta-box p {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .cta-box .btn-primary { position: relative; font-size: 1.1rem; padding: 18px 44px; }
+    .cta-chains {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 48px;
+      position: relative;
+    }
+    .cta-chain {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 500;
+    }
+    .cta-chain .chain-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 48px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p { font-size: 0.8rem; color: var(--text-dim); }
+    footer a { color: var(--purple); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-bright); }
+
+    /* ---- Floating Coins ---- */
+    .floating-coins {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .coin {
+      position: absolute;
+      font-size: 1.5rem;
+      opacity: 0.15;
+      animation: coinFloat linear infinite;
+    }
+
+    /* ---- Animations ---- */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    @keyframes coinFloat {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.15; }
+      90% { opacity: 0.15; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .problem-grid, .earn-layout { grid-template-columns: 1fr; gap: 48px; }
+      .problem-visual { height: 280px; }
+      .steps { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .lb-header, .lb-row { grid-template-columns: 50px 1fr 90px 90px; padding: 12px 16px; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: rgba(12,12,29,0.97);
+        backdrop-filter: blur(20px);
+        padding: 24px;
+        gap: 16px;
+        border-bottom: 1px solid rgba(139,92,246,0.1);
+      }
+      .mobile-toggle { display: block; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .hero h1 { letter-spacing: -1px; }
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .mechanics-grid { grid-template-columns: 1fr; }
+      .cta-box { padding: 48px 24px; }
+      .cta-chains { flex-direction: column; align-items: center; gap: 12px; }
+      footer .container { flex-direction: column; gap: 16px; text-align: center; }
+      .lb-header, .lb-row { grid-template-columns: 40px 1fr 70px; }
+      .lb-tokens-col { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Coins -->
+  <div class="floating-coins" id="floating-coins"></div>
+
+  <!-- Particles -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- Navbar -->
+  <nav id="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo gradient-text">LUDEX</a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#problem">Problema</a></li>
+        <li><a href="#solution">Como funciona</a></li>
+        <li><a href="#mechanics">Mecanicas</a></li>
+        <li><a href="#earn">Recompensas</a></li>
+        <li><a href="#leaderboard">Ranking</a></li>
+        <li><a href="#cta" class="nav-cta">Jugar Ahora</a></li>
+      </ul>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <div class="hero-badge">
+        <span class="dot"></span>
+        OneHack 3.0 &middot; AI & GameFi Edition
+      </div>
+      <h1>
+        <span class="gradient-text">Aprende jugando.</span>
+        <span class="line2">Gana viviendo.</span>
+      </h1>
+      <p>El primer RPG on-chain que convierte la educacion financiera en una aventura. Misiones reales. Recompensas reales. Construido sobre OneChain.</p>
+      <div class="hero-buttons">
+        <a href="#cta" class="btn-primary">
+          <span>Comenzar Aventura</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#solution" class="btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Ver Demo</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="stats-bar reveal">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <h3 class="gradient-text" data-count="200">0</h3>
+          <p>Millones de jovenes sin educacion financiera en LATAM</p>
+        </div>
+        <div class="stat-item">
+          <h3 style="color: var(--pink)" data-count="73" data-suffix="%">0</h3>
+          <p>De adultos LATAM no entienden interes compuesto</p>
+        </div>
+        <div class="stat-item">
+          <h3 style="color: var(--orange)" data-count="4" data-suffix="h">0</h3>
+          <p>Tiempo diario promedio en videojuegos</p>
+        </div>
+        <div class="stat-item">
+          <h3 style="color: var(--cyan)">$0</h3>
+          <p>Costo para el jugador. Siempre gratis.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="problem reveal" id="problem">
+    <div class="container">
+      <div class="problem-grid">
+        <div>
+          <p class="section-label">El Problema</p>
+          <h2 class="section-title">Una generacion entera <br><span class="gradient-text">sin herramientas financieras</span></h2>
+          <p class="section-subtitle">Los metodos tradicionales fallan. Los jovenes no necesitan mas clases aburridas. Necesitan experiencias que los atrapen.</p>
+          <div class="problem-cards">
+            <div class="problem-card">
+              <div class="icon">&#128683;</div>
+              <div>
+                <h4>Educacion inaccesible</h4>
+                <p>Solo el 21% de las escuelas en LATAM incluyen finanzas en su curriculo.</p>
+              </div>
+            </div>
+            <div class="problem-card">
+              <div class="icon">&#128564;</div>
+              <div>
+                <h4>Metodos obsoletos</h4>
+                <p>PDFs, videos de 2 horas, examenes. Cero engagement, cero retencion.</p>
+              </div>
+            </div>
+            <div class="problem-card">
+              <div class="icon">&#128176;</div>
+              <div>
+                <h4>Sin incentivos reales</h4>
+                <p>Aprender no se premia. El esfuerzo no tiene retorno tangible.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="problem-visual">
+          <div class="problem-circle">
+            <div class="big-num gradient-text">200M+</div>
+            <span>Jovenes en LATAM sin educacion financiera</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solution -->
+  <section class="solution reveal" id="solution">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-label">Como Funciona</p>
+        <h2 class="section-title">Tres pasos. <span class="gradient-text">Una transformacion.</span></h2>
+        <p class="section-subtitle">Sin complicaciones. Sin barreras. Entra al mundo de Ludex y empieza a aprender desde el primer minuto.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <span class="step-icon">&#127918;</span>
+          <h3>Juega</h3>
+          <p>Explora una ciudad RPG donde cada distrito es un mundo financiero. Completa misiones, negocia con NPCs inteligentes, gestiona tu portafolio.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <span class="step-icon">&#129504;</span>
+          <h3>Aprende</h3>
+          <p>Cada mecanica del juego ensenya un concepto real. Los NPCs (impulsados por IA) adaptan sus conversaciones a tu nivel de conocimiento.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <span class="step-icon">&#128640;</span>
+          <h3>Gana</h3>
+          <p>Logros verificados on-chain. Sube en el ranking. Los mejores jugadores ganan tokens reales del tesoro comunitario en OneChain.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mechanics -->
+  <section class="mechanics reveal" id="mechanics">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-label">Mecanicas de Juego</p>
+        <h2 class="section-title">Cada mision es <span class="gradient-text">una leccion real</span></h2>
+        <p class="section-subtitle">No es un quiz disfrazado de juego. Es un RPG real donde las finanzas son la mecanica central.</p>
+      </div>
+      <div class="mechanics-grid">
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#127978;</span>
+          <span class="mechanic-tag tag-purple">TRADING</span>
+          <h4>Distrito del Mercado</h4>
+          <p>Compra, vende y negocia con NPCs. Aprende oferta, demanda y el arte de la negociacion.</p>
+        </div>
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#127974;</span>
+          <span class="mechanic-tag tag-pink">AHORRO</span>
+          <h4>Banco de Ludex</h4>
+          <p>Deposita tus ganancias y observa el interes compuesto en accion. El tiempo es tu mejor aliado.</p>
+        </div>
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#128737;</span>
+          <span class="mechanic-tag tag-orange">RIESGO</span>
+          <h4>Gremio de Seguros</h4>
+          <p>Protege tus activos contra eventos aleatorios. Aprende gestion de riesgo con primas reales del juego.</p>
+        </div>
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#9876;&#65039;</span>
+          <span class="mechanic-tag tag-cyan">INVERSION</span>
+          <h4>Arena de Portafolios</h4>
+          <p>Compite contra otros jugadores. Diversifica, rebalancea y demuestra tu estrategia en tiempo real.</p>
+        </div>
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#128220;</span>
+          <span class="mechanic-tag tag-green">IMPUESTOS</span>
+          <h4>Temporada Fiscal</h4>
+          <p>Eventos estacionales donde aprendes planeacion fiscal, obligaciones y optimizacion tributaria.</p>
+        </div>
+        <div class="mechanic-card">
+          <span class="mechanic-icon">&#129302;</span>
+          <span class="mechanic-tag tag-purple">IA</span>
+          <h4>NPCs con Claude AI</h4>
+          <p>Cada NPC entiende tu nivel. Adapta sus explicaciones, sugiere misiones y te reta intelectualmente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Earn -->
+  <section class="earn reveal" id="earn">
+    <div class="container">
+      <div class="earn-layout">
+        <div>
+          <p class="section-label">Earn While You Learn</p>
+          <h2 class="section-title">Tu conocimiento <span class="gradient-text">tiene valor real</span></h2>
+          <p class="section-subtitle">Cada logro es un activo on-chain. Tu progreso se convierte en recompensas tangibles.</p>
+          <div class="earn-features">
+            <div class="earn-feature">
+              <div class="ef-icon" style="background: rgba(139,92,246,0.12);">&#127942;</div>
+              <div>
+                <h4>Credenciales Verificables</h4>
+                <p>Tus logros se mintan como Soulbound Tokens en OneChain. Nadie puede quitartelos.</p>
+              </div>
+            </div>
+            <div class="earn-feature">
+              <div class="ef-icon" style="background: rgba(236,72,153,0.12);">&#128176;</div>
+              <div>
+                <h4>Recompensas del Tesoro</h4>
+                <p>Los mejores jugadores reciben tokens cada temporada del pool comunitario.</p>
+              </div>
+            </div>
+            <div class="earn-feature">
+              <div class="ef-icon" style="background: rgba(249,115,22,0.12);">&#128200;</div>
+              <div>
+                <h4>Progresion Real</h4>
+                <p>Tu perfil on-chain crece contigo. Muestralo en entrevistas, universidades, DAOs.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="xp-bar-demo" id="xp-demo">
+          <div class="xp-player">
+            <div class="xp-avatar">D</div>
+            <div class="xp-info">
+              <h4>DanielCrypto.one</h4>
+              <span>Nivel 12 &middot; Distrito del Mercado</span>
+            </div>
+          </div>
+          <div class="xp-track">
+            <div class="xp-fill" id="xp-fill"></div>
+          </div>
+          <div class="xp-label">
+            <span>2,450 / 3,000 XP</span>
+            <span>Nivel 13</span>
+          </div>
+          <div class="xp-rewards">
+            <div class="xp-reward">
+              <div class="rw-left">
+                <span>&#127941;</span>
+                <span>Master en Interes Compuesto</span>
+              </div>
+              <span class="rw-right rw-earned">Obtenido</span>
+            </div>
+            <div class="xp-reward">
+              <div class="rw-left">
+                <span>&#128170;</span>
+                <span>Negociador Experto</span>
+              </div>
+              <span class="rw-right rw-earned">Obtenido</span>
+            </div>
+            <div class="xp-reward">
+              <div class="rw-left">
+                <span>&#128274;</span>
+                <span>Gestor de Riesgo Pro</span>
+              </div>
+              <span class="rw-right rw-locked">82%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leaderboard -->
+  <section class="leaderboard reveal" id="leaderboard">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-label">Leaderboard</p>
+        <h2 class="section-title">Los mejores <span class="gradient-text">financieros del mundo</span></h2>
+        <p class="section-subtitle">Ranking global en tiempo real. Compite cada temporada por tokens y reconocimiento on-chain.</p>
+      </div>
+      <div class="leaderboard-table">
+        <div class="lb-header">
+          <span>#</span>
+          <span>Jugador</span>
+          <span>XP</span>
+          <span class="lb-tokens-col">Tokens</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank gold">1</span>
+          <div class="lb-player">
+            <div class="lb-player-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">V</div>
+            <div>
+              <div class="lb-player-name">ValeSolana.one</div>
+              <div class="lb-player-tag">Nivel 24 &middot; Bogota</div>
+            </div>
+          </div>
+          <span class="lb-xp">48,200</span>
+          <span class="lb-tokens lb-tokens-col">1,240</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank silver">2</span>
+          <div class="lb-player">
+            <div class="lb-player-avatar" style="background: linear-gradient(135deg, #ec4899, #f97316);">M</div>
+            <div>
+              <div class="lb-player-name">MatiDeFi.one</div>
+              <div class="lb-player-tag">Nivel 22 &middot; Buenos Aires</div>
+            </div>
+          </div>
+          <span class="lb-xp">41,800</span>
+          <span class="lb-tokens lb-tokens-col">980</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank bronze">3</span>
+          <div class="lb-player">
+            <div class="lb-player-avatar" style="background: linear-gradient(135deg, #f97316, #fbbf24);">L</div>
+            <div>
+              <div class="lb-player-name">LunaFinance.one</div>
+              <div class="lb-player-tag">Nivel 21 &middot; CDMX</div>
+            </div>
+          </div>
+          <span class="lb-xp">39,500</span>
+          <span class="lb-tokens lb-tokens-col">870</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">4</span>
+          <div class="lb-player">
+            <div class="lb-player-avatar" style="background: linear-gradient(135deg, #06b6d4, #22c55e);">C</div>
+            <div>
+              <div class="lb-player-name">CryptoCarlos.one</div>
+              <div class="lb-player-tag">Nivel 19 &middot; Lima</div>
+            </div>
+          </div>
+          <span class="lb-xp">34,100</span>
+          <span class="lb-tokens lb-tokens-col">720</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">5</span>
+          <div class="lb-player">
+            <div class="lb-player-avatar" style="background: linear-gradient(135deg, #22c55e, #8b5cf6);">S</div>
+            <div>
+              <div class="lb-player-name">SofiaWeb3.one</div>
+              <div class="lb-player-tag">Nivel 18 &middot; Santiago</div>
+            </div>
+          </div>
+          <span class="lb-xp">31,400</span>
+          <span class="lb-tokens lb-tokens-col">650</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta reveal" id="cta">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Tu aventura financiera <br><span class="gradient-text">comienza ahora</span></h2>
+        <p>Unete a la primera generacion de LATAM que aprende finanzas jugando.</p>
+        <a href="#" class="btn-primary">
+          <span>Entrar al Mundo Ludex</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <div class="cta-chains">
+          <div class="cta-chain">
+            <span class="chain-dot" style="background: var(--purple);"></span>
+            Powered by OneChain
+          </div>
+          <div class="cta-chain">
+            <span class="chain-dot" style="background: var(--pink);"></span>
+            Move Smart Contracts
+          </div>
+          <div class="cta-chain">
+            <span class="chain-dot" style="background: var(--orange);"></span>
+            Claude AI NPCs
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p><span class="gradient-text" style="font-weight: 800;">LUDEX</span> &middot; OneHack 3.0 &middot; DoraHacks 2026</p>
+      <div class="footer-links">
+        <a href="#">GitHub</a>
+        <a href="#">Twitter</a>
+        <a href="#">Discord</a>
+        <a href="#">DoraHacks</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Mobile menu ----
+    document.getElementById('mobile-toggle').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('open');
+    });
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.addEventListener('click', () => {
+        document.getElementById('nav-links').classList.remove('open');
+      });
+    });
+
+    // ---- Navbar scroll effect ----
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ---- Scroll reveal ----
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach(el => revealObserver.observe(el));
+
+    // ---- XP bar animation ----
+    const xpObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          document.getElementById('xp-fill').style.width = '82%';
+          xpObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    xpObserver.observe(document.getElementById('xp-demo'));
+
+    // ---- Counter animation ----
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const counters = e.target.querySelectorAll('[data-count]');
+          counters.forEach(counter => {
+            const target = parseInt(counter.dataset.count);
+            const suffix = counter.dataset.suffix || '';
+            const prefix = counter.dataset.prefix || '';
+            let current = 0;
+            const increment = Math.ceil(target / 60);
+            const timer = setInterval(() => {
+              current += increment;
+              if (current >= target) {
+                current = target;
+                clearInterval(timer);
+              }
+              counter.textContent = prefix + current.toLocaleString() + (current >= target ? '+' : '') + suffix;
+            }, 25);
+          });
+          counterObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.stats-grid').forEach(el => counterObserver.observe(el));
+
+    // ---- Floating Coins ----
+    (function createCoins() {
+      const container = document.getElementById('floating-coins');
+      const symbols = ['\u{1FA99}', '\u{1F4B0}', '\u{2B50}', '\u{1F3AE}', '\u{1F4B8}', '\u{1F4C8}', '\u{1F3C6}'];
+      for (let i = 0; i < 15; i++) {
+        const coin = document.createElement('div');
+        coin.className = 'coin';
+        coin.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        coin.style.left = Math.random() * 100 + '%';
+        coin.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+        coin.style.animationDuration = (12 + Math.random() * 20) + 's';
+        coin.style.animationDelay = (Math.random() * 15) + 's';
+        coin.style.opacity = 0.05 + Math.random() * 0.1;
+        container.appendChild(coin);
+      }
+    })();
+
+    // ---- Particles ----
+    (function particles() {
+      const canvas = document.getElementById('particles-canvas');
+      const ctx = canvas.getContext('2d');
+      let w, h, dots = [];
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      const count = Math.min(60, Math.floor(w * h / 20000));
+      for (let i = 0; i < count; i++) {
+        dots.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: 1 + Math.random() * 1.5,
+          color: ['rgba(139,92,246,', 'rgba(236,72,153,', 'rgba(249,115,22,'][Math.floor(Math.random() * 3)]
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        dots.forEach(d => {
+          d.x += d.vx;
+          d.y += d.vy;
+          if (d.x < 0) d.x = w;
+          if (d.x > w) d.x = 0;
+          if (d.y < 0) d.y = h;
+          if (d.y > h) d.y = 0;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+          ctx.fillStyle = d.color + '0.3)';
+          ctx.fill();
+        });
+        // connect nearby dots
+        for (let i = 0; i < dots.length; i++) {
+          for (let j = i + 1; j < dots.length; j++) {
+            const dx = dots[i].x - dots[j].x;
+            const dy = dots[i].y - dots[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+              ctx.beginPath();
+              ctx.moveTo(dots[i].x, dots[i].y);
+              ctx.lineTo(dots[j].x, dots[j].y);
+              ctx.strokeStyle = dots[i].color + (0.06 * (1 - dist / 150)) + ')';
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ---- Smooth anchor scroll ----
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ludex — Aprende jugando. Gana viviendo.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dark:#0c0c1d;--darker:#070712;--purple:#8b5cf6;--pink:#ec4899;--orange:#f97316;
+  --purple-glow:rgba(139,92,246,.3);--pink-glow:rgba(236,72,153,.25);
+}
+html,body{height:100%;overflow:hidden;background:var(--dark);color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ── Progress Bar ── */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--purple),var(--pink),var(--orange));z-index:1000;transition:width .5s cubic-bezier(.22,1,.36,1)}
+
+/* ── Slide Container ── */
+#deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4vw 6vw;opacity:0;visibility:hidden;transform:translateY(30px) scale(.97);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),visibility 0s .6s;text-align:center}
+.slide.active{opacity:1;visibility:visible;transform:translateY(0) scale(1);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),visibility 0s 0s}
+
+/* ── Typography ── */
+.slide h1{font-size:clamp(2.2rem,5.5vw,5rem);font-weight:900;line-height:1.08;letter-spacing:-.03em;margin-bottom:.6em;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.75) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.slide h2{font-size:clamp(1.4rem,3vw,2.8rem);font-weight:700;line-height:1.15;margin-bottom:.5em;color:#fff}
+.slide h3{font-size:clamp(1rem,1.8vw,1.6rem);font-weight:600;color:rgba(255,255,255,.7);margin-bottom:1.2em}
+.slide p,.slide li{font-size:clamp(.9rem,1.4vw,1.25rem);line-height:1.6;color:rgba(255,255,255,.75);max-width:56ch}
+.slide .big-stat{font-size:clamp(3rem,8vw,7rem);font-weight:900;line-height:1;margin:.15em 0}
+.slide .stat-label{font-size:clamp(.85rem,1.2vw,1.1rem);font-weight:500;text-transform:uppercase;letter-spacing:.15em;color:rgba(255,255,255,.5)}
+.gradient-text{background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gradient-orange{background:linear-gradient(135deg,var(--orange),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{font-size:clamp(1rem,2vw,1.7rem);font-weight:600;color:var(--purple);letter-spacing:.04em}
+
+/* ── Accent Line ── */
+.accent-line{width:80px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--pink));margin:0 auto 1.5em}
+
+/* ── Cards & Grids ── */
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;width:100%;max-width:960px;margin-top:1.5rem}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1.8rem 1.4rem;text-align:center;transition:transform .3s,border-color .3s}
+.card:hover{transform:translateY(-4px);border-color:var(--purple)}
+.card h4{font-size:1.1rem;font-weight:700;margin-bottom:.4em;color:#fff}
+.card p{font-size:.9rem;color:rgba(255,255,255,.6)}
+.card .icon{font-size:2.4rem;margin-bottom:.6rem}
+
+/* ── District Map ── */
+.district-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;width:100%;max-width:900px;margin-top:1.2rem}
+.district{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:14px;padding:1.2rem 1rem;text-align:left;transition:all .3s}
+.district:hover{background:rgba(139,92,246,.15);border-color:var(--purple);transform:scale(1.03)}
+.district .d-icon{font-size:1.6rem;margin-bottom:.4rem}
+.district .d-name{font-weight:700;font-size:.95rem;margin-bottom:.2rem}
+.district .d-desc{font-size:.78rem;color:rgba(255,255,255,.5)}
+
+/* ── TAM SAM SOM ── */
+.tam-circles{display:flex;align-items:center;justify-content:center;gap:0;margin:1.5rem 0;position:relative}
+.tam-ring{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.tam-ring.tam{width:clamp(200px,28vw,320px);height:clamp(200px,28vw,320px);background:radial-gradient(circle,rgba(139,92,246,.12) 0%,rgba(139,92,246,.03) 70%);border:2px solid rgba(139,92,246,.3)}
+.tam-ring.sam{width:clamp(150px,20vw,230px);height:clamp(150px,20vw,230px);background:radial-gradient(circle,rgba(236,72,153,.15) 0%,rgba(236,72,153,.04) 70%);border:2px solid rgba(236,72,153,.4);position:absolute}
+.tam-ring.som{width:clamp(90px,12vw,140px);height:clamp(90px,12vw,140px);background:radial-gradient(circle,rgba(249,115,22,.2) 0%,rgba(249,115,22,.06) 70%);border:2px solid rgba(249,115,22,.5);position:absolute}
+.tam-ring .ring-val{font-size:clamp(1.1rem,2.2vw,1.8rem);font-weight:800}
+.tam-ring .ring-label{font-size:clamp(.6rem,.9vw,.8rem);text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.6)}
+
+/* ── Play Learn Earn ── */
+.ple-flow{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;margin:1.5rem 0}
+.ple-step{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.ple-circle{width:clamp(80px,12vw,120px);height:clamp(80px,12vw,120px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem}
+.ple-circle.play{background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(139,92,246,.08));border:2px solid var(--purple)}
+.ple-circle.learn{background:linear-gradient(135deg,rgba(236,72,153,.25),rgba(236,72,153,.08));border:2px solid var(--pink)}
+.ple-circle.earn{background:linear-gradient(135deg,rgba(249,115,22,.25),rgba(249,115,22,.08));border:2px solid var(--orange)}
+.ple-label{font-weight:800;font-size:clamp(.9rem,1.4vw,1.2rem);text-transform:uppercase;letter-spacing:.1em}
+.ple-desc{font-size:clamp(.7rem,1vw,.88rem);color:rgba(255,255,255,.5);max-width:16ch;text-align:center}
+.ple-arrow{font-size:1.6rem;color:rgba(255,255,255,.2)}
+
+/* ── Leaderboard ── */
+.leaderboard{width:100%;max-width:520px;margin:1rem auto 0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.lb-header{display:grid;grid-template-columns:50px 1fr 90px 90px;padding:.7rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.06)}
+.lb-row{display:grid;grid-template-columns:50px 1fr 90px 90px;padding:.65rem 1rem;font-size:.88rem;align-items:center;border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s}
+.lb-row:hover{background:rgba(139,92,246,.08)}
+.lb-row .rank{font-weight:800;color:var(--purple)}
+.lb-row .name{font-weight:600}.lb-row .xp{color:var(--orange);font-weight:700}.lb-row .creds{color:var(--pink);font-weight:600}
+.lb-row:first-child .rank{color:var(--orange)}
+
+/* ── Tech Stack ── */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;width:100%;max-width:720px;margin-top:1rem}
+.tech-item{display:flex;align-items:center;gap:.8rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.9rem 1.1rem;transition:border-color .3s}
+.tech-item:hover{border-color:var(--purple)}
+.tech-item .t-icon{font-size:1.5rem}
+.tech-item .t-label{font-weight:700;font-size:.85rem}.tech-item .t-desc{font-size:.72rem;color:rgba(255,255,255,.45)}
+
+/* ── Revenue ── */
+.rev-bars{display:flex;align-items:flex-end;justify-content:center;gap:2rem;height:180px;margin:1.5rem 0 .5rem}
+.rev-bar{display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.rev-bar .bar{width:clamp(50px,8vw,80px);border-radius:8px 8px 0 0;transition:height 1s cubic-bezier(.22,1,.36,1)}
+.rev-bar .bar-label{font-size:.75rem;color:rgba(255,255,255,.5)}.rev-bar .bar-val{font-weight:800;font-size:1rem}
+
+/* ── Roadmap ── */
+.roadmap{display:flex;gap:0;width:100%;max-width:1000px;margin-top:1rem;position:relative}
+.roadmap::before{content:'';position:absolute;top:22px;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--pink),var(--orange))}
+.rm-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;padding:0 .5rem}
+.rm-dot{width:14px;height:14px;border-radius:50%;background:var(--purple);border:3px solid var(--dark);z-index:1;margin-bottom:.8rem;box-shadow:0 0 12px var(--purple-glow)}
+.rm-step:nth-child(3) .rm-dot{background:var(--pink)}
+.rm-step:nth-child(4) .rm-dot,.rm-step:nth-child(5) .rm-dot{background:var(--orange)}
+.rm-time{font-weight:800;font-size:.8rem;color:var(--purple);margin-bottom:.2rem;text-transform:uppercase;letter-spacing:.08em}
+.rm-text{font-size:.75rem;color:rgba(255,255,255,.55);text-align:center;max-width:150px}
+
+/* ── Background FX ── */
+.bg-glow{position:absolute;border-radius:50%;filter:blur(120px);opacity:.35;pointer-events:none;z-index:-1}
+.glow-purple{background:var(--purple);width:500px;height:500px;top:-10%;right:-5%}
+.glow-pink{background:var(--pink);width:400px;height:400px;bottom:-10%;left:-5%}
+.glow-orange{background:var(--orange);width:350px;height:350px;top:20%;left:40%}
+
+/* ── Slide Number ── */
+#slide-num{position:fixed;bottom:1.5rem;right:2rem;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.25);z-index:100}
+
+/* ── Controls hint ── */
+#controls-hint{position:fixed;bottom:1.5rem;left:2rem;font-size:.7rem;color:rgba(255,255,255,.2);z-index:100}
+
+/* ── Speaker Notes ── */
+#notes-panel{position:fixed;bottom:0;left:0;right:0;background:rgba(7,7,18,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.08);padding:1.2rem 2rem;font-size:.85rem;color:rgba(255,255,255,.6);transform:translateY(100%);transition:transform .4s cubic-bezier(.22,1,.36,1);z-index:500;max-height:30vh;overflow-y:auto}
+#notes-panel.visible{transform:translateY(0)}
+#notes-panel h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--purple);margin-bottom:.5rem}
+
+/* ── Fullscreen ── */
+:-webkit-full-screen{background:var(--dark)}:-moz-full-screen{background:var(--dark)}:fullscreen{background:var(--dark)}
+
+/* ── Animated Counter ── */
+.counter{display:inline-block}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .slide{padding:6vw 5vw}
+  .grid-3{grid-template-columns:1fr}
+  .district-grid{grid-template-columns:repeat(2,1fr)}
+  .roadmap{flex-wrap:wrap;gap:1rem}
+  .roadmap::before{display:none}
+  .rev-bars{height:140px;gap:1rem}
+  .tam-circles{transform:scale(.85)}
+  .ple-flow{gap:.6rem}
+  .tech-grid{grid-template-columns:1fr}
+}
+
+/* ── Particles ── */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;animation:float linear infinite}
+@keyframes float{0%{opacity:0;transform:translateY(100vh) scale(0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translateY(-10vh) scale(1)}}
+</style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Progress -->
+<div id="progress" style="width:0%"></div>
+
+<!-- Slide Number -->
+<div id="slide-num">1 / 12</div>
+<div id="controls-hint">arrows / click to navigate &middot; F fullscreen &middot; N notes</div>
+
+<!-- Speaker Notes -->
+<div id="notes-panel"><h4>Speaker Notes</h4><p id="notes-text"></p></div>
+
+<!-- ═══════════════════ SLIDES ═══════════════════ -->
+<div id="deck">
+
+<!-- SLIDE 1: Opening -->
+<div class="slide active" data-notes="Open with the Steve Jobs storytelling quote. Pause. Let it land. Then deliver the problem framing. Ludex is about changing the narrative for 200M young people in Latin America.">
+  <div class="bg-glow glow-purple"></div>
+  <div class="bg-glow glow-pink" style="opacity:.15"></div>
+  <p class="tagline" style="margin-bottom:1.5rem;opacity:.7">OneHack 3.0 &mdash; AI & GameFi Edition</p>
+  <h1 style="font-size:clamp(3rem,7vw,6.5rem)">LUDEX</h1>
+  <div class="accent-line"></div>
+  <h3 style="color:rgba(255,255,255,.55);font-weight:400;font-style:italic;margin-bottom:2rem">&ldquo;The most powerful person in the world is the storyteller.&rdquo;</h3>
+  <p style="font-size:clamp(1.1rem,1.8vw,1.5rem);font-weight:600;color:var(--purple)">Aprende jugando. Gana viviendo.</p>
+</div>
+
+<!-- SLIDE 2: Problem -->
+<div class="slide" data-notes="Hammer the 200M stat. Pause after each bullet. The 3+ hours gaming stat is the setup for the insight on the next slide. The paradox: they game all day but learn nothing about money.">
+  <div class="bg-glow glow-pink" style="top:-15%;left:60%"></div>
+  <h2>The Problem</h2>
+  <div class="accent-line"></div>
+  <div class="big-stat gradient-text" data-counter="200" data-suffix="M">0</div>
+  <p class="stat-label" style="margin-bottom:1.5rem">young people in LATAM with zero financial education</p>
+  <div class="grid-3">
+    <div class="card"><div class="icon">📉</div><h4>65%</h4><p>of adults fail basic financial literacy tests</p></div>
+    <div class="card"><div class="icon">🎮</div><h4>3.2 hrs/day</h4><p>average gaming time among LATAM youth</p></div>
+    <div class="card"><div class="icon">🚪</div><h4>78%</h4><p>drop out of traditional financial education in month 1</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 3: Insight -->
+<div class="slide" data-notes="This is the pivot moment. People don't avoid learning - they avoid boredom. Financial literacy IS a game: progression, risk, reward, strategy. We just haven't built it right. Until now.">
+  <div class="bg-glow glow-purple" style="top:30%;left:-10%"></div>
+  <h2>The Insight</h2>
+  <div class="accent-line"></div>
+  <h1 style="font-size:clamp(1.8rem,4vw,3.5rem);max-width:18ch;margin:0 auto .5em">People don't avoid learning.<br><span class="gradient-text">They avoid boredom.</span></h1>
+  <p style="max-width:48ch;margin:0 auto">Financial literacy has progression, risk, reward, strategy. It is already a game. Nobody just built it yet.</p>
+  <p style="font-weight:700;color:var(--purple);margin-top:1.5rem;font-size:1.2rem">Until now.</p>
+</div>
+
+<!-- SLIDE 4: Solution -->
+<div class="slide" data-notes="Walk through each district. These are not abstract concepts - each one is a living neighborhood in the RPG. AI NPCs powered by Claude adapt every conversation. No two players get the same experience. You don't study finance. You live it.">
+  <div class="bg-glow glow-orange" style="opacity:.15;top:-10%;right:20%"></div>
+  <h2>The Solution</h2>
+  <div class="accent-line"></div>
+  <p style="margin-bottom:1.2rem;font-weight:600;color:rgba(255,255,255,.85);font-size:clamp(.95rem,1.3vw,1.15rem)">A GameFi RPG where every quest teaches real finance.<br>Every achievement earns on-chain rewards.</p>
+  <div class="district-grid">
+    <div class="district"><div class="d-icon">🏪</div><div class="d-name">Market District</div><div class="d-desc">Supply, demand & negotiation</div></div>
+    <div class="district"><div class="d-icon">🏦</div><div class="d-name">Bank of Ludex</div><div class="d-desc">Compound interest & savings</div></div>
+    <div class="district"><div class="d-icon">🛡️</div><div class="d-name">Insurance Guild</div><div class="d-desc">Risk management & premiums</div></div>
+    <div class="district"><div class="d-icon">⚔️</div><div class="d-name">Portfolio Arena</div><div class="d-desc">Diversification & allocation</div></div>
+    <div class="district"><div class="d-icon">📋</div><div class="d-name">Tax Season</div><div class="d-desc">Tax planning & civic duty</div></div>
+  </div>
+  <p style="margin-top:1.2rem;color:var(--purple);font-weight:600;font-size:.95rem">AI NPCs powered by Claude &mdash; no two paths are the same.</p>
+</div>
+
+<!-- SLIDE 5: How It Works -->
+<div class="slide" data-notes="The core loop. Play, Learn, Earn. Simple to explain, powerful in execution. Credentials are soulbound tokens on OneChain - portable, verifiable, permanent proof of financial competency.">
+  <div class="bg-glow glow-purple" style="top:50%;right:-10%"></div>
+  <h2>How It Works</h2>
+  <div class="accent-line"></div>
+  <div class="ple-flow">
+    <div class="ple-step">
+      <div class="ple-circle play">🎮</div>
+      <div class="ple-label" style="color:var(--purple)">Play</div>
+      <div class="ple-desc">Explore the RPG world. Accept quests.</div>
+    </div>
+    <div class="ple-arrow">&#10132;</div>
+    <div class="ple-step">
+      <div class="ple-circle learn">🧠</div>
+      <div class="ple-label" style="color:var(--pink)">Learn</div>
+      <div class="ple-desc">AI NPCs adapt. Story, not slides.</div>
+    </div>
+    <div class="ple-arrow">&#10132;</div>
+    <div class="ple-step">
+      <div class="ple-circle earn">💰</div>
+      <div class="ple-label" style="color:var(--orange)">Earn</div>
+      <div class="ple-desc">On-chain credentials & token rewards.</div>
+    </div>
+  </div>
+  <p style="margin-top:1.5rem;font-weight:700;font-size:clamp(1rem,1.6vw,1.3rem)">The loop is simple. <span class="gradient-text">The impact is massive.</span></p>
+</div>
+
+<!-- SLIDE 6: Demo / Leaderboard -->
+<div class="slide" data-notes="Show the leaderboard preview. This is what players see - real competition, real credentials, real progress. Each credential is a soulbound token on OneChain. Names on chain. Skills verified.">
+  <div class="bg-glow glow-pink" style="top:0;left:50%"></div>
+  <h2>Leaderboard Preview</h2>
+  <div class="accent-line"></div>
+  <p style="margin-bottom:.8rem;color:rgba(255,255,255,.6);font-size:.95rem">On-chain rankings &middot; Seasonal resets &middot; Soulbound credentials</p>
+  <div class="leaderboard">
+    <div class="lb-header"><span>#</span><span>Player</span><span>XP</span><span>Creds</span></div>
+    <div class="lb-row"><span class="rank">1</span><span class="name">CryptoMaria_CO 🇨🇴</span><span class="xp" data-counter="12840" data-speed="40">0</span><span class="creds">23</span></div>
+    <div class="lb-row"><span class="rank">2</span><span class="name">ElChavo_MX 🇲🇽</span><span class="xp" data-counter="11200" data-speed="40">0</span><span class="creds">19</span></div>
+    <div class="lb-row"><span class="rank">3</span><span class="name">LunaDeFi 🇧🇷</span><span class="xp" data-counter="9750" data-speed="40">0</span><span class="creds">16</span></div>
+    <div class="lb-row"><span class="rank">4</span><span class="name">SaverBoy_PE 🇵🇪</span><span class="xp" data-counter="8420" data-speed="40">0</span><span class="creds">14</span></div>
+    <div class="lb-row"><span class="rank">5</span><span class="name">InvestGirl_AR 🇦🇷</span><span class="xp" data-counter="7100" data-speed="40">0</span><span class="creds">11</span></div>
+  </div>
+  <p style="margin-top:1rem;font-size:.85rem;color:var(--purple);font-weight:600">Every name on-chain. Every skill verified.</p>
+</div>
+
+<!-- SLIDE 7: Market -->
+<div class="slide" data-notes="Two exploding markets and we sit at the intersection. TAM $8.4B, SAM $1.8B, SOM $90M. Duolingo proved gamified education. Axie proved blockchain gaming in LATAM. Nobody combined them. That's us.">
+  <div class="bg-glow glow-orange" style="opacity:.2;top:-5%;left:30%"></div>
+  <h2>Market Opportunity</h2>
+  <div class="accent-line"></div>
+  <div class="tam-circles">
+    <div class="tam-ring tam">
+      <div class="ring-val" style="color:var(--purple)">$<span data-counter="8.4" data-decimals="1" data-speed="60">0</span>B</div>
+      <div class="ring-label">TAM</div>
+      <div class="tam-ring sam">
+        <div class="ring-val" style="color:var(--pink)">$<span data-counter="1.8" data-decimals="1" data-speed="60">0</span>B</div>
+        <div class="ring-label">SAM</div>
+        <div class="tam-ring som">
+          <div class="ring-val" style="color:var(--orange)">$<span data-counter="90" data-speed="50">0</span>M</div>
+          <div class="ring-label">SOM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;margin-top:1rem">
+    <div style="text-align:center"><div style="font-weight:800;font-size:1rem;color:var(--purple)">EdTech LATAM</div><div style="font-size:.78rem;color:rgba(255,255,255,.5)">$3.2B &rarr; $8.7B by 2030</div></div>
+    <div style="text-align:center"><div style="font-weight:800;font-size:1rem;color:var(--pink)">GameFi Global</div><div style="font-size:.78rem;color:rgba(255,255,255,.5)">$18B &rarr; $65B+ by 2030</div></div>
+    <div style="text-align:center"><div style="font-weight:800;font-size:1rem;color:var(--orange)">FinLit Tools</div><div style="font-size:.78rem;color:rgba(255,255,255,.5)">$1.2B &rarr; $4.5B by 2030</div></div>
+  </div>
+  <p style="margin-top:1rem;font-weight:700;font-size:.95rem">Nobody owns the intersection. <span class="gradient-orange">That intersection is ours.</span></p>
+</div>
+
+<!-- SLIDE 8: Technology -->
+<div class="slide" data-notes="Not a prototype duct-taped together. Real infrastructure: OneChain for credentials and rewards, Claude for AI NPCs, Unity/Godot for the game client, Next.js for dashboard. Move smart contracts handle rewards, leaderboard, and credentials.">
+  <div class="bg-glow glow-purple" style="top:60%;right:-5%"></div>
+  <h2>Technology</h2>
+  <div class="accent-line"></div>
+  <div class="tech-grid">
+    <div class="tech-item"><div class="t-icon">⛓️</div><div><div class="t-label">OneChain (Move)</div><div class="t-desc">Rewards, credentials, leaderboard</div></div></div>
+    <div class="tech-item"><div class="t-icon">🤖</div><div><div class="t-label">Claude API</div><div class="t-desc">Adaptive NPC dialogue & coaching</div></div></div>
+    <div class="tech-item"><div class="t-icon">🎮</div><div><div class="t-label">Unity / Godot</div><div class="t-desc">2.5D RPG game client</div></div></div>
+    <div class="tech-item"><div class="t-icon">🖥️</div><div><div class="t-label">Next.js + Tailwind</div><div class="t-desc">Dashboard, landing, leaderboard</div></div></div>
+    <div class="tech-item"><div class="t-icon">🔧</div><div><div class="t-label">Node.js Backend</div><div class="t-desc">Game state & API gateway</div></div></div>
+    <div class="tech-item"><div class="t-icon">📦</div><div><div class="t-label">IPFS Storage</div><div class="t-desc">Achievement metadata</div></div></div>
+  </div>
+  <p style="margin-top:1.2rem;font-size:.85rem;color:rgba(255,255,255,.5)">Smart Contracts: <span style="color:var(--purple)">RewardPool.move</span> &middot; <span style="color:var(--pink)">Leaderboard.move</span> &middot; <span style="color:var(--orange)">Credential.move</span></p>
+</div>
+
+<!-- SLIDE 9: Business Model -->
+<div class="slide" data-notes="Three revenue streams all aligned with mission. In-game purchases (B2C), educational licenses (B2B/B2G), and on-chain economy. Unit economics work at 50K active players. LTV:CAC ratio of 28.8:1. Gross margin 78%.">
+  <div class="bg-glow glow-pink" style="top:-10%;left:-5%"></div>
+  <h2>Business Model</h2>
+  <div class="accent-line"></div>
+  <div class="grid-3">
+    <div class="card" style="border-color:rgba(139,92,246,.2)">
+      <div class="icon">🎯</div>
+      <h4 style="color:var(--purple)">In-Game (B2C)</h4>
+      <p>Cosmetics, premium quests, season passes</p>
+      <div style="font-weight:800;font-size:1.1rem;margin-top:.5rem;color:var(--purple)">$4-8 ARPU/mo</div>
+    </div>
+    <div class="card" style="border-color:rgba(236,72,153,.2)">
+      <div class="icon">🏫</div>
+      <h4 style="color:var(--pink)">Licenses (B2B)</h4>
+      <p>Schools, universities, governments</p>
+      <div style="font-weight:800;font-size:1.1rem;margin-top:.5rem;color:var(--pink)">$5-15 / student</div>
+    </div>
+    <div class="card" style="border-color:rgba(249,115,22,.2)">
+      <div class="icon">⛓️</div>
+      <h4 style="color:var(--orange)">On-Chain</h4>
+      <p>Transaction fees, credential verification</p>
+      <div style="font-weight:800;font-size:1.1rem;margin-top:.5rem;color:var(--orange)">78% margin</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center">
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">LTV:CAC</div><div style="font-weight:900;font-size:1.5rem;color:var(--purple)">28.8:1</div></div>
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">Gross Margin</div><div style="font-weight:900;font-size:1.5rem;color:var(--pink)">78%</div></div>
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">CAC Payback</div><div style="font-weight:900;font-size:1.5rem;color:var(--orange)">&lt; 1 mo</div></div>
+  </div>
+</div>
+
+<!-- SLIDE 10: Revenue Projections -->
+<div class="slide" data-notes="Year 1: $100K revenue, 50K players. Year 2: $1.5M, 500K players. Year 3: $6M, 3M players. Approaching break-even by Year 3. Profitable in Year 4. Raising $2.5M seed at $10-14M pre-money.">
+  <div class="bg-glow glow-orange" style="opacity:.15;bottom:0;right:20%"></div>
+  <h2>Growth Trajectory</h2>
+  <div class="accent-line"></div>
+  <div class="rev-bars">
+    <div class="rev-bar">
+      <div class="bar-val" style="color:var(--purple)">$100K</div>
+      <div class="bar" style="height:30px;background:linear-gradient(180deg,var(--purple),rgba(139,92,246,.3))"></div>
+      <div class="bar-label">Year 1</div>
+    </div>
+    <div class="rev-bar">
+      <div class="bar-val" style="color:var(--pink)">$1.5M</div>
+      <div class="bar" style="height:80px;background:linear-gradient(180deg,var(--pink),rgba(236,72,153,.3))"></div>
+      <div class="bar-label">Year 2</div>
+    </div>
+    <div class="rev-bar">
+      <div class="bar-val" style="color:var(--orange)">$6M</div>
+      <div class="bar" style="height:160px;background:linear-gradient(180deg,var(--orange),rgba(249,115,22,.3))"></div>
+      <div class="bar-label">Year 3</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">Players Y3</div><div style="font-weight:800;font-size:1.3rem">3M</div></div>
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">DAU Y3</div><div style="font-weight:800;font-size:1.3rem">300K</div></div>
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">Schools Y3</div><div style="font-weight:800;font-size:1.3rem">800</div></div>
+    <div style="text-align:center"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)">Credentials</div><div style="font-weight:800;font-size:1.3rem">1.2M</div></div>
+  </div>
+  <div style="margin-top:1rem;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:12px;padding:.8rem 1.5rem;display:inline-block">
+    <span style="font-weight:800;color:var(--purple)">Raising $2.5M Seed</span>
+    <span style="color:rgba(255,255,255,.5);margin:0 .5rem">&middot;</span>
+    <span style="font-weight:600;color:rgba(255,255,255,.7)">$10-14M pre-money</span>
+  </div>
+</div>
+
+<!-- SLIDE 11: Roadmap -->
+<div class="slide" data-notes="We're not waiting for the market - we're building it. Hackathon: core loop live. Month 1: 3 districts. Month 3: public beta in Colombia & Mexico. Month 6: full launch, 50K players. Year 1: 500K players, Series A.">
+  <div class="bg-glow glow-purple" style="top:10%;left:0"></div>
+  <h2>Roadmap</h2>
+  <div class="accent-line"></div>
+  <div class="roadmap">
+    <div class="rm-step"><div class="rm-dot"></div><div class="rm-time" style="color:var(--purple)">Now</div><div class="rm-text">Core loop live: 1 district, AI NPCs, on-chain rewards</div></div>
+    <div class="rm-step"><div class="rm-dot"></div><div class="rm-time" style="color:var(--purple)">Month 1</div><div class="rm-text">3 districts, mobile build, tokenomics</div></div>
+    <div class="rm-step"><div class="rm-dot"></div><div class="rm-time" style="color:var(--pink)">Month 3</div><div class="rm-text">Public beta: Colombia & Mexico, school pilots</div></div>
+    <div class="rm-step"><div class="rm-dot"></div><div class="rm-time" style="color:var(--orange)">Month 6</div><div class="rm-text">Full launch, DAO governance, 50K players</div></div>
+    <div class="rm-step"><div class="rm-dot"></div><div class="rm-time" style="color:var(--orange)">Year 1</div><div class="rm-text">500K players, ministry partnerships, Series A</div></div>
+  </div>
+  <p style="margin-top:2rem;font-weight:700;font-size:clamp(.95rem,1.4vw,1.2rem)">We are not waiting for the market. <span class="gradient-orange">We are building it.</span></p>
+</div>
+
+<!-- SLIDE 12: Close -->
+<div class="slide" data-notes="This is the emotional close. Slow down. Financial literacy is the difference between a generation that builds wealth and one that stays trapped. 200M young people deserve better than a PDF and a prayer. Ludex is that world. End with the Steve Jobs quote.">
+  <div class="bg-glow glow-purple" style="top:0;left:30%"></div>
+  <div class="bg-glow glow-pink" style="bottom:0;right:20%;opacity:.15"></div>
+  <h1 style="font-size:clamp(2.5rem,6vw,5.5rem)">LUDEX</h1>
+  <div class="accent-line" style="width:120px"></div>
+  <p style="max-width:42ch;margin:0 auto 1.5rem;font-size:clamp(1rem,1.5vw,1.3rem);color:rgba(255,255,255,.7);line-height:1.7">200 million young people deserve better than a PDF and a prayer. They deserve a world where learning feels like playing and progress pays real dividends.</p>
+  <h2 style="margin-bottom:.5rem"><span class="gradient-text">Aprende jugando.</span></h2>
+  <h2><span class="gradient-orange">Gana viviendo.</span></h2>
+  <p style="margin-top:2rem;font-style:italic;color:rgba(255,255,255,.35);font-size:.95rem;max-width:40ch">&ldquo;The people who are crazy enough to think they can change the world are the ones who do.&rdquo;</p>
+  <p style="margin-top:1.5rem;font-weight:700;font-size:1.2rem;color:var(--purple)">Thank you.</p>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+(function(){
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slide-num');
+  const notesPanel = document.getElementById('notes-panel');
+  const notesText = document.getElementById('notes-text');
+  let notesVisible = false;
+
+  function goTo(n){
+    if(n<0||n>=total)return;
+    slides[current].classList.remove('active');
+    current=n;
+    slides[current].classList.add('active');
+    progress.style.width=((current+1)/total*100)+'%';
+    slideNum.textContent=(current+1)+' / '+total;
+    notesText.textContent=slides[current].dataset.notes||'';
+    animateCounters(slides[current]);
+    animateBars(slides[current]);
+  }
+
+  function next(){goTo(current+1)}
+  function prev(){goTo(current-1)}
+
+  // Keyboard
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='Enter')next();
+    else if(e.key==='ArrowLeft'||e.key==='Backspace')prev();
+    else if(e.key==='ArrowDown')next();
+    else if(e.key==='ArrowUp')prev();
+    else if(e.key.toLowerCase()==='f'){
+      if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});
+      else document.exitFullscreen();
+    }
+    else if(e.key.toLowerCase()==='n'){
+      notesVisible=!notesVisible;
+      notesPanel.classList.toggle('visible',notesVisible);
+    }
+  });
+
+  // Click nav
+  document.addEventListener('click',function(e){
+    if(e.target.closest('#notes-panel'))return;
+    if(e.clientX>window.innerWidth/2)next();else prev();
+  });
+
+  // Touch
+  let touchX=0;
+  document.addEventListener('touchstart',function(e){touchX=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){
+    const dx=e.changedTouches[0].clientX-touchX;
+    if(Math.abs(dx)>50){dx<0?next():prev()}
+  },{passive:true});
+
+  // Animated Counters
+  function animateCounters(slide){
+    slide.querySelectorAll('[data-counter]').forEach(function(el){
+      if(el.dataset.animated)return;
+      el.dataset.animated='1';
+      const target=parseFloat(el.dataset.counter);
+      const decimals=parseInt(el.dataset.decimals)||0;
+      const suffix=el.dataset.suffix||'';
+      const speed=parseInt(el.dataset.speed)||30;
+      const duration=1200;
+      const steps=duration/speed;
+      let step=0;
+      const timer=setInterval(function(){
+        step++;
+        const val=target*(step/steps);
+        if(step>=steps){
+          el.textContent=target.toFixed(decimals)+suffix;
+          clearInterval(timer);
+        }else{
+          el.textContent=val.toFixed(decimals)+suffix;
+        }
+      },speed);
+    });
+  }
+
+  // Animate revenue bars
+  function animateBars(slide){
+    slide.querySelectorAll('.rev-bar .bar').forEach(function(bar){
+      const h=bar.style.height;
+      bar.style.height='0';
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){bar.style.height=h});
+      });
+    });
+  }
+
+  // Particles
+  const pc=document.getElementById('particles');
+  function spawnParticle(){
+    const p=document.createElement('div');
+    p.className='particle';
+    const size=Math.random()*3+1;
+    const colors=['var(--purple)','var(--pink)','var(--orange)'];
+    p.style.cssText='width:'+size+'px;height:'+size+'px;left:'+Math.random()*100+'%;background:'+colors[Math.floor(Math.random()*3)]+';animation-duration:'+(8+Math.random()*12)+'s;animation-delay:'+Math.random()*2+'s';
+    pc.appendChild(p);
+    setTimeout(function(){p.remove()},22000);
+  }
+  setInterval(spawnParticle,600);
+  for(let i=0;i<15;i++)setTimeout(spawnParticle,i*200);
+
+  // Init
+  animateCounters(slides[0]);
+  notesText.textContent=slides[0].dataset.notes||'';
+})();
+</script>
+</body>
+</html>
