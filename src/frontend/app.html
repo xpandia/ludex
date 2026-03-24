@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ludex — Play-to-Learn GameFi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   CSS Reset & Variables
+   ═══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#06060e;--bg-card:#0f0f1a;--bg-card2:#161625;--bg-surface:#1a1a2e;
+  --purple:#8b5cf6;--purple-glow:#8b5cf640;--cyan:#06b6d4;--cyan-glow:#06b6d440;
+  --orange:#f97316;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--pink:#ec4899;
+  --text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --border:#1e293b;--glass:rgba(15,15,26,0.7);
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+  --tab-height:72px;--header-height:56px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html{font-size:16px;background:var(--bg-deep)}
+body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-primary);
+  min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font-body);cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:var(--font-body);color:var(--text-primary);background:var(--bg-surface);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;width:100%;
+  outline:none;transition:border .2s}
+input:focus,textarea:focus{border-color:var(--purple)}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ═══════════════════════════════════════════
+   Utility
+   ═══════════════════════════════════════════ */
+.pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.pill-purple{background:rgba(139,92,246,.15);color:var(--purple)}
+.pill-cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+.pill-orange{background:rgba(249,115,22,.15);color:var(--orange)}
+.pill-green{background:rgba(34,197,94,.15);color:var(--green)}
+.pill-red{background:rgba(239,68,68,.15);color:var(--red)}
+.pill-pink{background:rgba(236,72,153,.15);color:var(--pink)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 24px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;
+  transition:all .2s;position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;
+  box-shadow:0 4px 20px var(--purple-glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px var(--purple-glow)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary)}
+.btn-secondary:hover{border-color:var(--purple)}
+.btn-sm{padding:8px 16px;font-size:12px}
+.btn-block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;backdrop-filter:blur(12px);transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.card-accent{border-left:3px solid var(--purple)}
+
+/* ═══════════════════════════════════════════
+   Skeleton loading
+   ═══════════════════════════════════════════ */
+.skeleton{background:linear-gradient(90deg,var(--bg-card2) 25%,var(--bg-surface) 50%,var(--bg-card2) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-xs)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-line{height:14px;margin-bottom:8px;border-radius:4px}
+.skel-line.w60{width:60%}.skel-line.w80{width:80%}.skel-line.w40{width:40%}
+.skel-circle{border-radius:50%}
+.skel-card{height:120px;border-radius:var(--radius);margin-bottom:12px}
+
+/* ═══════════════════════════════════════════
+   Toast notifications
+   ═══════════════════════════════════════════ */
+#toast-container{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:14px 18px;
+  border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .3s ease;min-width:280px;max-width:380px}
+.toast.out{animation:toastOut .3s ease forwards}
+.toast-icon{font-size:20px;flex-shrink:0}
+.toast-body{flex:1}
+.toast-title{font-weight:600;font-size:13px}
+.toast-msg{font-size:12px;color:var(--text-secondary);margin-top:2px}
+@keyframes toastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(100%)}}
+
+/* ═══════════════════════════════════════════
+   Confetti
+   ═══════════════════════════════════════════ */
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998}
+
+/* ═══════════════════════════════════════════
+   App Layout
+   ═══════════════════════════════════════════ */
+#app{min-height:100dvh;display:flex;flex-direction:column}
+.page-content{flex:1;padding:16px 16px calc(var(--tab-height) + var(--safe-bottom) + 16px);
+  max-width:480px;margin:0 auto;width:100%}
+
+/* Tab bar */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-height) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);background:rgba(6,6,14,.95);backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);display:flex;z-index:100}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--text-muted);transition:color .2s;position:relative;padding:8px 0}
+.tab-item.active{color:var(--purple)}
+.tab-item.active::before{content:'';position:absolute;top:-1px;left:25%;right:25%;height:2px;
+  background:var(--purple);border-radius:0 0 4px 4px}
+.tab-icon{font-size:22px;line-height:1}
+.tab-label{font-size:10px;font-weight:600;letter-spacing:.3px}
+
+/* Screens */
+.screen{display:none;animation:fadeSlide .3s ease}
+.screen.active{display:block}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════════
+   Auth Screen
+   ═══════════════════════════════════════════ */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100dvh;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,.08),transparent 60%)}
+.auth-logo{font-family:var(--font-display);font-size:48px;font-weight:700;
+  background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-1px}
+.auth-sub{color:var(--text-secondary);font-size:15px;margin-bottom:40px;max-width:300px}
+.auth-form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.auth-switch{margin-top:16px;font-size:13px;color:var(--text-secondary)}
+.auth-switch span{color:var(--cyan);cursor:pointer;font-weight:500}
+.auth-error{color:var(--red);font-size:13px;min-height:20px;margin-top:4px}
+
+/* ═══════════════════════════════════════════
+   Home Tab
+   ═══════════════════════════════════════════ */
+.home-welcome{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:4px}
+.home-subtitle{color:var(--text-secondary);font-size:13px;margin-bottom:20px}
+
+.player-card{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.05));
+  border:1px solid rgba(139,92,246,.2);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.player-card-top{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;
+  color:#fff;flex-shrink:0;box-shadow:0 4px 20px var(--purple-glow)}
+.avatar-sm{width:36px;height:36px;font-size:14px}
+.avatar-lg{width:80px;height:80px;font-size:32px}
+.player-info{flex:1}
+.player-name{font-family:var(--font-display);font-weight:600;font-size:18px}
+.level-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,var(--purple),#6d28d9);
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;margin-top:4px}
+.xp-bar-wrap{margin-top:4px}
+.xp-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:4px}
+.xp-bar{height:8px;background:var(--bg-surface);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--cyan));
+  transition:width .6s ease;position:relative}
+.xp-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:30px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3));border-radius:4px}
+
+.streak-card{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px}
+.streak-fire{font-size:32px;animation:firePulse 1.5s infinite}
+@keyframes firePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.streak-info{flex:1}
+.streak-count{font-family:var(--font-display);font-size:24px;font-weight:700}
+.streak-label{color:var(--text-secondary);font-size:12px}
+
+.daily-quest{background:linear-gradient(135deg,rgba(249,115,22,.08),rgba(249,115,22,.02));
+  border:1px solid rgba(249,115,22,.2);border-left:3px solid var(--orange);
+  border-radius:var(--radius);padding:16px;margin-bottom:20px}
+.daily-quest-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.daily-quest-title{font-family:var(--font-display);font-weight:600;font-size:15px}
+.daily-quest-desc{color:var(--text-secondary);font-size:13px;margin-bottom:12px}
+
+.quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px 12px;text-align:center}
+.stat-value{font-family:var(--font-display);font-size:20px;font-weight:700}
+.stat-label{font-size:10px;color:var(--text-secondary);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+.section-title{font-family:var(--font-display);font-size:16px;font-weight:600;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+
+.category-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px;cursor:pointer;transition:all .2s}
+.cat-card:hover{border-color:var(--purple)}
+.cat-icon{font-size:28px;margin-bottom:6px}
+.cat-name{font-size:12px;font-weight:600;margin-bottom:8px}
+.cat-progress-bar{height:4px;background:var(--bg-surface);border-radius:2px;overflow:hidden}
+.cat-progress-fill{height:100%;border-radius:2px;transition:width .4s}
+.cat-progress-label{font-size:10px;color:var(--text-muted);margin-top:4px}
+
+/* ═══════════════════════════════════════════
+   Quests Tab
+   ═══════════════════════════════════════════ */
+.quest-filters{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch}
+.quest-filters::-webkit-scrollbar{display:none}
+.filter-chip{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:500;
+  background:var(--bg-card);border:1px solid var(--border);white-space:nowrap;transition:all .2s}
+.filter-chip.active{background:var(--purple);border-color:var(--purple);color:#fff}
+
+.quest-list{display:flex;flex-direction:column;gap:12px}
+.quest-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.quest-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.quest-card[data-cat="0"]::before{background:var(--green)}
+.quest-card[data-cat="1"]::before{background:var(--cyan)}
+.quest-card[data-cat="2"]::before{background:var(--yellow)}
+.quest-card[data-cat="3"]::before{background:var(--red)}
+.quest-card[data-cat="4"]::before{background:var(--purple)}
+.quest-card[data-cat="5"]::before{background:var(--orange)}
+.quest-card:hover{border-color:var(--purple);transform:translateY(-2px)}
+.quest-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.quest-title{font-family:var(--font-display);font-weight:600;font-size:15px;flex:1}
+.quest-diff{display:flex;gap:2px;color:var(--yellow);font-size:12px}
+.quest-desc{color:var(--text-secondary);font-size:13px;margin-bottom:10px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.quest-rewards{display:flex;gap:12px;align-items:center}
+.quest-reward{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600}
+.quest-reward-xp{color:var(--cyan)}
+.quest-reward-token{color:var(--orange)}
+
+.quest-empty{text-align:center;padding:40px 20px;color:var(--text-secondary)}
+.quest-empty-icon{font-size:48px;margin-bottom:12px}
+
+/* ═══════════════════════════════════════════
+   Quest Modal
+   ═══════════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg-deep);border-radius:var(--radius) var(--radius) 0 0;width:100%;
+  max-width:480px;max-height:90dvh;overflow-y:auto;animation:slideUp .3s ease;padding:24px 20px 32px}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:8px}
+.modal-desc{color:var(--text-secondary);font-size:14px;margin-bottom:20px}
+
+.quiz-question{margin-bottom:24px}
+.quiz-q-num{font-size:12px;color:var(--purple);font-weight:600;margin-bottom:6px}
+.quiz-q-text{font-size:15px;font-weight:500;margin-bottom:14px;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{padding:14px 16px;border-radius:var(--radius-sm);background:var(--bg-card);
+  border:2px solid var(--border);cursor:pointer;font-size:14px;transition:all .2s;text-align:left}
+.quiz-opt:hover{border-color:var(--purple)}
+.quiz-opt.selected{border-color:var(--purple);background:rgba(139,92,246,.1)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(34,197,94,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+.quiz-opt.reveal-correct{border-color:var(--green);background:rgba(34,197,94,.08)}
+.quiz-explanation{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px 14px;margin-top:10px;font-size:13px;color:var(--text-secondary);line-height:1.5}
+.quiz-nav{display:flex;gap:10px;margin-top:20px}
+
+.quiz-result{text-align:center;padding:20px 0}
+.quiz-result-icon{font-size:64px;margin-bottom:12px}
+.quiz-result-title{font-family:var(--font-display);font-size:24px;font-weight:700;margin-bottom:8px}
+.quiz-result-score{font-size:15px;color:var(--text-secondary);margin-bottom:16px}
+.quiz-result-rewards{display:flex;justify-content:center;gap:24px;margin-bottom:20px}
+.quiz-result-reward{text-align:center}
+.quiz-result-reward-val{font-family:var(--font-display);font-size:28px;font-weight:700}
+.quiz-result-reward-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.xp-anim{animation:xpPop .6s ease}
+@keyframes xpPop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+
+/* ═══════════════════════════════════════════
+   NPC Tab
+   ═══════════════════════════════════════════ */
+.npc-grid{display:flex;flex-direction:column;gap:12px}
+.npc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.npc-card:hover{border-color:var(--purple);transform:translateY(-2px)}
+.npc-avatar{width:56px;height:56px;border-radius:var(--radius-sm);display:flex;align-items:center;
+  justify-content:center;font-size:28px;flex-shrink:0}
+.npc-avatar.luna{background:linear-gradient(135deg,#818cf8,#6366f1)}
+.npc-avatar.rex{background:linear-gradient(135deg,#34d399,#059669)}
+.npc-avatar.sage{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.npc-avatar.fox{background:linear-gradient(135deg,#fb923c,#ea580c)}
+.npc-info{flex:1}
+.npc-name{font-family:var(--font-display);font-weight:600;font-size:15px}
+.npc-role{color:var(--text-secondary);font-size:12px;margin-top:2px}
+.npc-specialty{font-size:11px;color:var(--text-muted);margin-top:4px}
+
+/* Chat */
+.chat-screen{display:none;position:fixed;inset:0;z-index:200;background:var(--bg-deep);
+  flex-direction:column}
+.chat-screen.open{display:flex}
+.chat-header{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--bg-card);border-bottom:1px solid var(--border)}
+.chat-back{font-size:20px;padding:4px}
+.chat-npc-info{flex:1}
+.chat-npc-name{font-family:var(--font-display);font-weight:600;font-size:15px}
+.chat-npc-role{font-size:11px;color:var(--text-secondary)}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chat-msg{display:flex;gap:10px;max-width:85%;animation:fadeSlide .3s ease}
+.chat-msg.user{margin-left:auto;flex-direction:row-reverse}
+.chat-msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:14px;flex-shrink:0}
+.chat-msg-bubble{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.5}
+.chat-msg.npc .chat-msg-bubble{background:var(--bg-card);border:1px solid var(--border);
+  border-bottom-left-radius:4px}
+.chat-msg.user .chat-msg-bubble{background:var(--purple);border-bottom-right-radius:4px}
+.chat-msg-xp{font-size:11px;color:var(--cyan);margin-top:4px;text-align:right}
+.typing-indicator{display:flex;gap:4px;padding:12px 16px}
+.typing-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);
+  animation:typingBounce 1.4s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.chat-suggestions{display:flex;gap:8px;padding:8px 16px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch}
+.chat-suggestions::-webkit-scrollbar{display:none}
+.suggestion-pill{padding:8px 14px;border-radius:20px;font-size:12px;background:var(--bg-card);
+  border:1px solid var(--border);white-space:nowrap;cursor:pointer;transition:all .2s}
+.suggestion-pill:hover{border-color:var(--purple)}
+.chat-input-wrap{display:flex;gap:8px;padding:12px 16px;background:var(--bg-card);
+  border-top:1px solid var(--border)}
+.chat-input-wrap input{flex:1;border-radius:24px;padding:10px 18px}
+.chat-send{width:42px;height:42px;border-radius:50%;background:var(--purple);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .2s}
+.chat-send:hover{background:#7c3aed}
+.chat-send:disabled{opacity:.4}
+
+/* ═══════════════════════════════════════════
+   Ranking Tab
+   ═══════════════════════════════════════════ */
+.rank-tabs{display:flex;gap:4px;background:var(--bg-card);border-radius:var(--radius-sm);
+  padding:4px;margin-bottom:16px}
+.rank-tab{flex:1;padding:10px;border-radius:var(--radius-xs);font-size:13px;font-weight:600;
+  text-align:center;transition:all .2s;color:var(--text-secondary)}
+.rank-tab.active{background:var(--purple);color:#fff}
+
+.rank-podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:24px;padding-top:12px}
+.podium-item{display:flex;flex-direction:column;align-items:center;text-align:center}
+.podium-item.first .avatar{width:64px;height:64px;font-size:24px;
+  box-shadow:0 0 30px rgba(234,179,8,.3);border:2px solid var(--yellow)}
+.podium-item.second .avatar{width:52px;height:52px;font-size:20px;border:2px solid #cbd5e1}
+.podium-item.third .avatar{width:48px;height:48px;font-size:18px;border:2px solid #b45309}
+.podium-rank{font-family:var(--font-display);font-weight:700;font-size:20px;margin-bottom:4px}
+.podium-rank.gold{color:var(--yellow)}.podium-rank.silver{color:#cbd5e1}.podium-rank.bronze{color:#b45309}
+.podium-name{font-size:12px;font-weight:600;margin-top:6px;max-width:80px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.podium-xp{font-size:10px;color:var(--text-secondary)}
+.podium-bar{width:100%;border-radius:var(--radius-xs) var(--radius-xs) 0 0;margin-top:6px}
+.podium-bar.first{height:80px;background:linear-gradient(180deg,rgba(234,179,8,.3),rgba(234,179,8,.05));width:100px}
+.podium-bar.second{height:56px;background:linear-gradient(180deg,rgba(203,213,225,.2),rgba(203,213,225,.05));width:88px}
+.podium-bar.third{height:40px;background:linear-gradient(180deg,rgba(180,83,9,.2),rgba(180,83,9,.05));width:88px}
+
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);
+  border:1px solid var(--border);border-radius:var(--radius-sm);transition:all .2s}
+.rank-item.is-me{border-color:var(--purple);background:rgba(139,92,246,.05)}
+.rank-num{width:28px;font-family:var(--font-display);font-weight:700;font-size:16px;
+  color:var(--text-muted);text-align:center}
+.rank-item.is-me .rank-num{color:var(--purple)}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.rank-me-badge{font-size:9px;background:var(--purple);color:#fff;padding:2px 6px;border-radius:4px;font-weight:700}
+.rank-meta{font-size:11px;color:var(--text-secondary);display:flex;gap:8px;margin-top:2px}
+.rank-xp{font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--cyan)}
+
+/* ═══════════════════════════════════════════
+   Profile Tab
+   ═══════════════════════════════════════════ */
+.profile-header{text-align:center;padding:20px 0;margin-bottom:20px}
+.profile-header .avatar{margin:0 auto 12px}
+.profile-username{font-family:var(--font-display);font-size:22px;font-weight:700}
+.profile-wallet{font-size:12px;color:var(--text-muted);margin-top:4px;word-break:break-all}
+
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:16px;text-align:center}
+.stat-card-icon{font-size:24px;margin-bottom:6px}
+.stat-card-val{font-family:var(--font-display);font-size:22px;font-weight:700}
+.stat-card-label{font-size:11px;color:var(--text-secondary);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+.badges-section{margin-bottom:24px}
+.badges-grid{display:flex;flex-wrap:wrap;gap:10px}
+.badge-item{width:64px;text-align:center}
+.badge-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin:0 auto 4px;transition:all .3s}
+.badge-icon.earned{box-shadow:0 0 20px var(--purple-glow);animation:badgeGlow 2s infinite alternate}
+.badge-icon.locked{filter:grayscale(1) brightness(.3);opacity:.4}
+@keyframes badgeGlow{0%{box-shadow:0 0 10px var(--purple-glow)}100%{box-shadow:0 0 25px var(--purple-glow)}}
+.badge-name{font-size:9px;color:var(--text-secondary);line-height:1.2}
+.badge-icon.rarity-0{background:linear-gradient(135deg,#475569,#334155)}
+.badge-icon.rarity-1{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.badge-icon.rarity-2{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.badge-icon.rarity-3{background:linear-gradient(135deg,#f59e0b,#d97706)}
+
+.curriculum-section{margin-bottom:24px}
+.curriculum-item{display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border)}
+.curriculum-item:last-child{border-bottom:none}
+.curriculum-icon{font-size:20px;width:28px;text-align:center}
+.curriculum-info{flex:1}
+.curriculum-name{font-size:13px;font-weight:500}
+.curriculum-bar{height:4px;background:var(--bg-surface);border-radius:2px;margin-top:6px;overflow:hidden}
+.curriculum-fill{height:100%;border-radius:2px}
+.curriculum-pct{font-size:12px;font-weight:600;color:var(--text-muted);width:36px;text-align:right}
+
+.staking-section{margin-bottom:24px}
+.stake-card{background:linear-gradient(135deg,rgba(249,115,22,.08),rgba(249,115,22,.02));
+  border:1px solid rgba(249,115,22,.2);border-radius:var(--radius);padding:20px}
+.stake-title{font-family:var(--font-display);font-weight:600;font-size:15px;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px}
+.stake-form{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.stake-row{display:flex;gap:10px}
+.stake-row input{flex:1}
+.stake-active{text-align:center}
+.stake-multiplier{font-family:var(--font-display);font-size:32px;font-weight:700;
+  background:linear-gradient(135deg,var(--orange),var(--yellow));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent}
+.stake-info{font-size:12px;color:var(--text-secondary);margin-top:4px}
+
+.logout-btn{margin-top:12px;width:100%;padding:14px;border-radius:var(--radius-sm);
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);
+  font-weight:600;font-size:14px;transition:all .2s}
+.logout-btn:hover{background:rgba(239,68,68,.15)}
+
+/* ═══════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════ */
+@media(min-width:768px){
+  .page-content{max-width:520px;padding:24px 24px calc(var(--tab-height) + 24px)}
+  .category-grid{grid-template-columns:repeat(3,1fr)}
+  .quick-stats{grid-template-columns:repeat(3,1fr)}
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .modal{border-radius:var(--radius);max-height:85dvh;margin-bottom:5dvh}
+  .modal-overlay{align-items:center}
+}
+@media(min-width:1024px){
+  .tab-bar{left:50%;transform:translateX(-50%);max-width:520px;border-radius:var(--radius) var(--radius) 0 0}
+}
+</style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ═══════════════════════════════════════════
+     AUTH SCREEN
+     ═══════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-logo">LUDEX</div>
+  <p class="auth-sub">Comienza tu aventura financiera. Aprende, juega y gana.</p>
+  <div class="auth-form" id="register-form">
+    <input type="text" id="reg-wallet" placeholder="Wallet address (0x...)" autocomplete="off">
+    <input type="text" id="reg-username" placeholder="Nombre de usuario" maxlength="24" autocomplete="off">
+    <button class="btn btn-primary btn-block" id="reg-btn" onclick="handleRegister()">Crear Cuenta</button>
+    <div class="auth-error" id="reg-error"></div>
+    <p class="auth-switch">Ya tengo cuenta <span onclick="showLogin()">Iniciar Sesion</span></p>
+  </div>
+  <div class="auth-form" id="login-form" style="display:none">
+    <input type="text" id="login-wallet" placeholder="Wallet address (0x...)" autocomplete="off">
+    <input type="text" id="login-username" placeholder="Nombre de usuario" maxlength="24" autocomplete="off">
+    <button class="btn btn-primary btn-block" id="login-btn" onclick="handleLogin()">Iniciar Sesion</button>
+    <div class="auth-error" id="login-error"></div>
+    <p class="auth-switch">No tengo cuenta <span onclick="showRegister()">Crear Cuenta</span></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+     ═══════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- HOME TAB -->
+  <div class="page-content screen active" id="tab-home">
+    <div class="home-welcome" id="welcome-msg">Hola! ...</div>
+    <div class="home-subtitle">Sigue aprendiendo, sigue ganando</div>
+
+    <div class="player-card" id="player-card">
+      <div class="player-card-top">
+        <div class="avatar" id="home-avatar">?</div>
+        <div class="player-info">
+          <div class="player-name" id="home-username">---</div>
+          <div class="level-badge" id="home-level">Nv. 1</div>
+        </div>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-label"><span id="home-xp-text">0 / 100 XP</span><span id="home-xp-pct">0%</span></div>
+        <div class="xp-bar"><div class="xp-fill" id="home-xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="streak-card" id="streak-card">
+      <div class="streak-fire">&#128293;</div>
+      <div class="streak-info">
+        <div class="streak-count" id="streak-count">0</div>
+        <div class="streak-label">dias de racha</div>
+      </div>
+    </div>
+
+    <div class="daily-quest" id="daily-quest">
+      <div class="daily-quest-header">
+        <span>&#127919;</span>
+        <span class="daily-quest-title">Quest del Dia</span>
+      </div>
+      <div class="daily-quest-desc" id="daily-quest-desc">Completa un desafio hoy para mantener tu racha</div>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('quests')">Ir a Quests</button>
+    </div>
+
+    <div class="quick-stats">
+      <div class="stat-box">
+        <div class="stat-value" id="stat-quests">0</div>
+        <div class="stat-label">Quests</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-tokens">0</div>
+        <div class="stat-label">Tokens</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-rank">#--</div>
+        <div class="stat-label">Ranking</div>
+      </div>
+    </div>
+
+    <div class="section-title">&#128218; Categorias</div>
+    <div class="category-grid" id="category-grid"></div>
+  </div>
+
+  <!-- QUESTS TAB -->
+  <div class="page-content screen" id="tab-quests">
+    <div class="section-title" style="font-size:20px;margin-bottom:4px">&#127919; Quests</div>
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Pon a prueba tus conocimientos financieros</p>
+    <div class="quest-filters" id="quest-filters"></div>
+    <div class="quest-list" id="quest-list">
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+    </div>
+    <div style="margin-top:20px">
+      <div class="section-title">&#9889; Generar Desafio</div>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">
+        La IA genera preguntas personalizadas para tu nivel
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="challenge-cats"></div>
+    </div>
+  </div>
+
+  <!-- NPCs TAB -->
+  <div class="page-content screen" id="tab-npcs">
+    <div class="section-title" style="font-size:20px;margin-bottom:4px">&#128172; Mentores IA</div>
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Chatea con mentores expertos que te guian en tu aprendizaje</p>
+    <div class="npc-grid" id="npc-grid">
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+    </div>
+  </div>
+
+  <!-- RANKING TAB -->
+  <div class="page-content screen" id="tab-ranking">
+    <div class="section-title" style="font-size:20px;margin-bottom:4px">&#127942; Ranking</div>
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Compite con otros jugadores</p>
+    <div class="rank-tabs">
+      <div class="rank-tab active" onclick="setRankTab('global',this)">Global</div>
+      <div class="rank-tab" onclick="setRankTab('weekly',this)">Semanal</div>
+      <div class="rank-tab" onclick="setRankTab('teams',this)">Equipos</div>
+    </div>
+    <div id="rank-podium" class="rank-podium"></div>
+    <div id="rank-list" class="rank-list">
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+      <div class="skeleton skel-card"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div class="page-content screen" id="tab-profile">
+    <div class="profile-header">
+      <div class="avatar avatar-lg" id="profile-avatar">?</div>
+      <div class="profile-username" id="profile-username">---</div>
+      <div class="level-badge" id="profile-level" style="margin-top:8px">Nv. 1</div>
+      <div class="xp-bar-wrap" style="max-width:240px;margin:12px auto 0">
+        <div class="xp-label"><span id="profile-xp-text">0 XP</span><span id="profile-xp-pct">0%</span></div>
+        <div class="xp-bar"><div class="xp-fill" id="profile-xp-fill" style="width:0%"></div></div>
+      </div>
+      <div class="profile-wallet" id="profile-wallet"></div>
+    </div>
+
+    <div class="stats-grid" id="profile-stats"></div>
+
+    <div class="badges-section">
+      <div class="section-title">&#127941; Insignias</div>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+
+    <div class="curriculum-section">
+      <div class="section-title">&#128218; Progreso del Curriculum</div>
+      <div id="curriculum-list"></div>
+    </div>
+
+    <div class="staking-section">
+      <div class="section-title">&#128176; Staking</div>
+      <div class="stake-card" id="stake-card"></div>
+    </div>
+
+    <button class="logout-btn" onclick="handleLogout()">Cerrar Sesion</button>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <div class="tab-item active" onclick="switchTab('home')" data-tab="home">
+      <span class="tab-icon">&#127968;</span><span class="tab-label">Inicio</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('quests')" data-tab="quests">
+      <span class="tab-icon">&#127919;</span><span class="tab-label">Quests</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('npcs')" data-tab="npcs">
+      <span class="tab-icon">&#128172;</span><span class="tab-label">NPCs</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('ranking')" data-tab="ranking">
+      <span class="tab-icon">&#127942;</span><span class="tab-label">Ranking</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('profile')" data-tab="profile">
+      <span class="tab-icon">&#128100;</span><span class="tab-label">Perfil</span>
+    </div>
+  </nav>
+</div>
+
+<!-- QUEST MODAL -->
+<div class="modal-overlay" id="quest-modal">
+  <div class="modal" id="quest-modal-content"></div>
+</div>
+
+<!-- CHAT SCREEN -->
+<div class="chat-screen" id="chat-screen">
+  <div class="chat-header">
+    <button class="chat-back" onclick="closeChat()">&#8592;</button>
+    <div class="npc-avatar avatar-sm" id="chat-avatar"></div>
+    <div class="chat-npc-info">
+      <div class="chat-npc-name" id="chat-npc-name"></div>
+      <div class="chat-npc-role" id="chat-npc-role"></div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-suggestions" id="chat-suggestions"></div>
+  <div class="chat-input-wrap">
+    <input type="text" id="chat-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" id="chat-send-btn" onclick="sendChat()">&#10148;</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  Global State
+// ═══════════════════════════════════════════
+const API = 'http://localhost:8000';
+let state = {
+  token: localStorage.getItem('ldx_token'),
+  wallet: localStorage.getItem('ldx_wallet'),
+  username: localStorage.getItem('ldx_username'),
+  player: null,
+  progress: null,
+  quests: [],
+  npcs: [],
+  leaderboard: null,
+  currentTab: 'home',
+  currentNpc: null,
+  chatHistory: {},
+  questFilter: 'all',
+};
+
+const CATS = [
+  { id: 0, name: 'Presupuesto', icon: '\uD83D\uDCB0', color: 'var(--green)', lessons: 4 },
+  { id: 1, name: 'Inversion', icon: '\uD83D\uDCC8', color: 'var(--cyan)', lessons: 4 },
+  { id: 2, name: 'Ahorro', icon: '\uD83C\uDFE6', color: 'var(--yellow)', lessons: 3 },
+  { id: 3, name: 'Credito', icon: '\uD83D\uDCB3', color: 'var(--red)', lessons: 4 },
+  { id: 4, name: 'Crypto', icon: '\u26D3\uFE0F', color: 'var(--purple)', lessons: 4 },
+  { id: 5, name: 'Impuestos', icon: '\uD83D\uDCCB', color: 'var(--orange)', lessons: 3 },
+];
+
+const NPC_STYLES = {
+  professor_luna: { emoji: '\uD83C\uDF19', css: 'luna' },
+  trader_rex: { emoji: '\uD83E\uDD96', css: 'rex' },
+  crypto_sage: { emoji: '\uD83E\uDDD9', css: 'sage' },
+  credit_fox: { emoji: '\uD83E\uDD8A', css: 'fox' },
+};
+
+const ALL_BADGES = [
+  { id: 'first_quest', name: 'First Steps', icon: '\uD83D\uDC63', rarity: 0 },
+  { id: 'quest_10', name: 'Knowledge Seeker', icon: '\uD83D\uDD0D', rarity: 1 },
+  { id: 'quest_50', name: 'Scholar', icon: '\uD83C\uDF93', rarity: 2 },
+  { id: 'quest_100', name: 'Financial Sage', icon: '\uD83E\uDDD9', rarity: 3 },
+  { id: 'streak_7', name: 'Week Warrior', icon: '\u2694\uFE0F', rarity: 1 },
+  { id: 'streak_30', name: 'Consistency King', icon: '\uD83D\uDC51', rarity: 3 },
+  { id: 'level_10', name: 'Rising Star', icon: '\u2B50', rarity: 1 },
+  { id: 'level_25', name: 'Finance Pro', icon: '\uD83D\uDCBC', rarity: 2 },
+  { id: 'level_50', name: 'Money Master', icon: '\uD83D\uDCB8', rarity: 3 },
+  { id: 'all_categories', name: 'Renaissance', icon: '\uD83C\uDFA8', rarity: 3 },
+  { id: 'staker', name: 'Diamond Hands', icon: '\uD83D\uDC8E', rarity: 1 },
+  { id: 'social_5', name: 'Networker', icon: '\uD83E\uDD1D', rarity: 1 },
+];
+
+// ═══════════════════════════════════════════
+//  API Helpers
+// ═══════════════════════════════════════════
+async function api(method, path, body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${path}`, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+  return data;
+}
+
+// ═══════════════════════════════════════════
+//  Auth
+// ═══════════════════════════════════════════
+function showLogin() {
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'flex';
+}
+function showRegister() {
+  document.getElementById('register-form').style.display = 'flex';
+  document.getElementById('login-form').style.display = 'none';
+}
+
+async function handleRegister() {
+  const wallet = document.getElementById('reg-wallet').value.trim();
+  const username = document.getElementById('reg-username').value.trim();
+  const errEl = document.getElementById('reg-error');
+  const btn = document.getElementById('reg-btn');
+  errEl.textContent = '';
+  if (!wallet || !username) { errEl.textContent = 'Completa todos los campos'; return; }
+  btn.disabled = true; btn.textContent = 'Creando...';
+  try {
+    const data = await api('POST', '/players', { wallet_address: wallet, username });
+    state.token = data.token;
+    state.wallet = data.player.wallet_address;
+    state.username = data.player.username;
+    localStorage.setItem('ldx_token', state.token);
+    localStorage.setItem('ldx_wallet', state.wallet);
+    localStorage.setItem('ldx_username', state.username);
+    toast('success', 'Bienvenido!', `Cuenta creada para ${state.username}`);
+    enterApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crear Cuenta';
+  }
+}
+
+async function handleLogin() {
+  const wallet = document.getElementById('login-wallet').value.trim();
+  const username = document.getElementById('login-username').value.trim();
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if (!wallet || !username) { errEl.textContent = 'Completa todos los campos'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const data = await api('POST', '/auth/login', { wallet_address: wallet, username });
+    state.token = data.token;
+    state.wallet = wallet.trim().toLowerCase();
+    state.username = username;
+    localStorage.setItem('ldx_token', state.token);
+    localStorage.setItem('ldx_wallet', state.wallet);
+    localStorage.setItem('ldx_username', state.username);
+    toast('success', 'Bienvenido de vuelta!', `Hola, ${state.username}`);
+    enterApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Iniciar Sesion';
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('ldx_token');
+  localStorage.removeItem('ldx_wallet');
+  localStorage.removeItem('ldx_username');
+  state.token = null; state.wallet = null; state.username = null; state.player = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════
+//  App Entry
+// ═══════════════════════════════════════════
+async function enterApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  await Promise.all([loadPlayerData(), loadQuests(), loadNpcs(), loadLeaderboard()]);
+  seedQuestsIfEmpty();
+}
+
+async function seedQuestsIfEmpty() {
+  // If there are no quests, create some starter ones so the UI isn't empty
+  if (state.quests.length > 0) return;
+  const starters = [
+    { title: 'Regla 50/30/20', description: 'Aprende como distribuir tu ingreso con la regla mas popular de presupuesto personal.', category: 0, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Interes Compuesto', description: 'Descubre el poder del interes compuesto y como puede hacer crecer tu dinero exponencialmente.', category: 1, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Fondo de Emergencia', description: 'Aprende por que necesitas un fondo de emergencia y como construir uno desde cero.', category: 2, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Score Crediticio', description: 'Entiende como funciona tu puntaje de credito y que factores lo afectan.', category: 3, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Blockchain Basico', description: 'Introduccion a la tecnologia blockchain, wallets y claves privadas.', category: 4, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Impuestos 101', description: 'Conceptos basicos de impuestos: brackets, deducciones y creditos fiscales.', category: 5, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Diversificacion', description: 'Como reducir riesgo distribuyendo tus inversiones entre diferentes activos.', category: 1, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
+    { title: 'Estrategias de Ahorro', description: 'Metodos avanzados para optimizar tus ahorros y alcanzar metas financieras.', category: 2, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
+  ];
+  try {
+    for (const q of starters) await api('POST', '/quests', q);
+    await loadQuests();
+  } catch (e) { /* ignore */ }
+}
+
+// ═══════════════════════════════════════════
+//  Data Loading
+// ═══════════════════════════════════════════
+async function loadPlayerData() {
+  try {
+    const [player, progress] = await Promise.all([
+      api('GET', `/players/${state.wallet}`),
+      api('GET', `/players/${state.wallet}/progress`),
+    ]);
+    state.player = player;
+    state.progress = progress;
+    renderHome();
+    renderProfile();
+  } catch (e) {
+    if (e.message.includes('401') || e.message.includes('expired')) {
+      handleLogout();
+      toast('error', 'Sesion expirada', 'Inicia sesion de nuevo');
+    }
+  }
+}
+
+async function loadQuests() {
+  try {
+    state.quests = await api('GET', '/quests');
+    renderQuests();
+  } catch (e) { /* fallback: empty */ }
+}
+
+async function loadNpcs() {
+  try {
+    state.npcs = await api('GET', '/npc/list');
+    renderNpcs();
+  } catch (e) { /* fallback */ }
+}
+
+async function loadLeaderboard() {
+  try {
+    state.leaderboard = await api('GET', '/leaderboard');
+    renderLeaderboard();
+  } catch (e) { /* fallback */ }
+}
+
+// ═══════════════════════════════════════════
+//  Tab Navigation
+// ═══════════════════════════════════════════
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  // Refresh data on certain tabs
+  if (tab === 'ranking') loadLeaderboard();
+  if (tab === 'profile') loadPlayerData();
+  if (tab === 'home') loadPlayerData();
+}
+
+// ═══════════════════════════════════════════
+//  Render: Home
+// ═══════════════════════════════════════════
+function renderHome() {
+  const p = state.player;
+  const pr = state.progress;
+  if (!p || !pr) return;
+
+  document.getElementById('welcome-msg').textContent = `Hola, ${p.username}! \uD83D\uDC4B`;
+  document.getElementById('home-avatar').textContent = p.username[0].toUpperCase();
+  document.getElementById('home-username').textContent = p.username;
+  document.getElementById('home-level').textContent = `Nv. ${p.level}`;
+  document.getElementById('home-xp-text').textContent = `${pr.xp} / ${pr.xp_to_next_level} XP`;
+  document.getElementById('home-xp-pct').textContent = `${pr.progress_percent}%`;
+  document.getElementById('home-xp-fill').style.width = `${pr.progress_percent}%`;
+  document.getElementById('streak-count').textContent = pr.daily_streak;
+  document.getElementById('stat-quests').textContent = pr.total_quests_completed;
+  document.getElementById('stat-tokens').textContent = formatTokens(pr.tokens_earned || 0);
+
+  // Find player rank
+  if (state.leaderboard) {
+    const myRank = state.leaderboard.entries.find(e => e.wallet_address === state.wallet);
+    document.getElementById('stat-rank').textContent = myRank ? `#${myRank.rank}` : '#--';
+  }
+
+  // Category grid
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = CATS.map(c => {
+    const done = pr.lesson_progress[String(c.id)] || 0;
+    const pct = Math.round((done / c.lessons) * 100);
+    return `<div class="cat-card" onclick="generateChallenge(${c.id})">
+      <div class="cat-icon">${c.icon}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-progress-bar"><div class="cat-progress-fill" style="width:${pct}%;background:${c.color}"></div></div>
+      <div class="cat-progress-label">${done}/${c.lessons} lecciones</div>
+    </div>`;
+  }).join('');
+}
+
+function formatTokens(amount) {
+  if (amount >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
+  if (amount >= 1000) return (amount / 1000).toFixed(0) + 'K';
+  return String(amount);
+}
+
+// ═══════════════════════════════════════════
+//  Render: Quests
+// ═══════════════════════════════════════════
+function renderQuests() {
+  // Filters
+  const filterWrap = document.getElementById('quest-filters');
+  filterWrap.innerHTML = `<div class="filter-chip ${state.questFilter === 'all' ? 'active' : ''}" onclick="filterQuests('all')">Todas</div>` +
+    CATS.map(c => `<div class="filter-chip ${state.questFilter === String(c.id) ? 'active' : ''}" onclick="filterQuests('${c.id}')">${c.icon} ${c.name}</div>`).join('');
+
+  // Challenge generation buttons
+  const challengeCats = document.getElementById('challenge-cats');
+  challengeCats.innerHTML = CATS.map(c =>
+    `<button class="btn btn-secondary btn-sm" onclick="generateChallenge(${c.id})">${c.icon} ${c.name}</button>`
+  ).join('');
+
+  // Quest list
+  const list = document.getElementById('quest-list');
+  let filtered = state.quests;
+  if (state.questFilter !== 'all') filtered = filtered.filter(q => q.category === parseInt(state.questFilter));
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="quest-empty"><div class="quest-empty-icon">&#128270;</div>
+      <p>No hay quests disponibles</p><p style="font-size:13px;margin-top:8px">Genera un desafio con IA!</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(q => {
+    const cat = CATS[q.category] || CATS[0];
+    const stars = '\u2B50'.repeat(q.difficulty + 1);
+    const catColors = ['pill-green','pill-cyan','pill-orange','pill-red','pill-purple','pill-orange'];
+    return `<div class="quest-card" data-cat="${q.category}" onclick="openQuest('${q.id}')">
+      <div class="quest-card-top">
+        <div class="quest-title">${q.title}</div>
+        <div class="quest-diff">${stars}</div>
+      </div>
+      <div style="margin-bottom:8px"><span class="pill ${catColors[q.category]}">${cat.name}</span></div>
+      <div class="quest-desc">${q.description}</div>
+      <div class="quest-rewards">
+        <div class="quest-reward quest-reward-xp">&#9889; ${q.xp_reward} XP</div>
+        <div class="quest-reward quest-reward-token">&#127872; ${formatTokens(q.token_reward)} LDX</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterQuests(cat) {
+  state.questFilter = cat;
+  renderQuests();
+}
+
+// ═══════════════════════════════════════════
+//  Quest Modal & Quiz
+// ═══════════════════════════════════════════
+let currentQuiz = null;
+
+async function openQuest(questId) {
+  const quest = state.quests.find(q => q.id === questId);
+  if (!quest) return;
+
+  const modal = document.getElementById('quest-modal');
+  const content = document.getElementById('quest-modal-content');
+  const cat = CATS[quest.category] || CATS[0];
+  const stars = '\u2B50'.repeat(quest.difficulty + 1);
+
+  content.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-title">${quest.title}</div>
+    <div style="margin-bottom:8px"><span class="pill pill-purple">${cat.name}</span> <span style="margin-left:8px">${stars}</span></div>
+    <div class="modal-desc">${quest.description}</div>
+    <div style="display:flex;gap:16px;margin-bottom:20px">
+      <div class="quest-reward quest-reward-xp" style="font-size:14px">&#9889; ${quest.xp_reward} XP</div>
+      <div class="quest-reward quest-reward-token" style="font-size:14px">&#127872; ${formatTokens(quest.token_reward)} LDX</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="start-challenge-btn" onclick="startChallenge(${quest.category})">
+      &#9889; Generar Desafio
+    </button>
+    <div id="quiz-container" style="margin-top:20px"></div>`;
+  modal.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('quest-modal').classList.remove('open');
+  currentQuiz = null;
+}
+document.getElementById('quest-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+async function generateChallenge(category) {
+  const modal = document.getElementById('quest-modal');
+  const content = document.getElementById('quest-modal-content');
+  const cat = CATS[category];
+  const level = state.player ? state.player.level : 1;
+
+  content.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-title">${cat.icon} Desafio de ${cat.name}</div>
+    <div class="modal-desc">Generando preguntas con IA...</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="skeleton skel-line w80"></div>
+      <div class="skeleton skel-line w60"></div>
+      <div class="skeleton skel-card" style="height:48px"></div>
+      <div class="skeleton skel-card" style="height:48px"></div>
+      <div class="skeleton skel-card" style="height:48px"></div>
+      <div class="skeleton skel-card" style="height:48px"></div>
+    </div>`;
+  modal.classList.add('open');
+
+  try {
+    const data = await api('POST', '/challenges/generate', {
+      category, difficulty: Math.min(level - 1, 4) < 0 ? 0 : Math.min(Math.floor(level / 5), 4),
+      player_level: level, num_questions: 3
+    });
+    currentQuiz = { questId: data.quest_id, questions: data.questions, answers: [],
+      currentQ: 0, xpReward: data.xp_reward, tokenReward: data.token_reward };
+    renderQuizQuestion();
+  } catch (e) {
+    content.innerHTML = `<div class="modal-handle"></div>
+      <div class="modal-title">Error</div>
+      <div class="modal-desc">${e.message}</div>
+      <button class="btn btn-secondary btn-block" onclick="closeModal()">Cerrar</button>`;
+  }
+}
+
+async function startChallenge(category) {
+  const btn = document.getElementById('start-challenge-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando...'; }
+  await generateChallenge(category);
+}
+
+function renderQuizQuestion() {
+  if (!currentQuiz) return;
+  const content = document.getElementById('quest-modal-content');
+  const q = currentQuiz.questions[currentQuiz.currentQ];
+  const total = currentQuiz.questions.length;
+  const idx = currentQuiz.currentQ;
+
+  content.innerHTML = `<div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text-secondary)">Pregunta ${idx + 1} de ${total}</div>
+      <div style="display:flex;gap:4px">${currentQuiz.questions.map((_, i) =>
+        `<div style="width:24px;height:4px;border-radius:2px;background:${i < idx ? 'var(--green)' : i === idx ? 'var(--purple)' : 'var(--border)'}"></div>`
+      ).join('')}</div>
+    </div>
+    <div class="quiz-question">
+      <div class="quiz-q-text">${q.question}</div>
+      <div class="quiz-options" id="quiz-options">
+        ${q.options.map((opt, i) => `<button class="quiz-opt" onclick="selectAnswer(${i})" data-idx="${i}">${opt}</button>`).join('')}
+      </div>
+      <div id="quiz-explanation" style="display:none"></div>
+    </div>
+    <div class="quiz-nav" id="quiz-nav" style="display:none">
+      <button class="btn btn-primary btn-block" id="quiz-next-btn" onclick="nextQuestion()">
+        ${idx + 1 === total ? 'Ver Resultado' : 'Siguiente'}
+      </button>
+    </div>`;
+}
+
+function selectAnswer(idx) {
+  if (!currentQuiz) return;
+  const opts = document.querySelectorAll('#quiz-options .quiz-opt');
+  // Don't allow re-select
+  if (opts[0].classList.contains('correct') || opts[0].classList.contains('wrong') ||
+      opts[1].classList.contains('correct') || opts[1].classList.contains('wrong')) return;
+
+  currentQuiz.answers[currentQuiz.currentQ] = idx;
+  opts.forEach((o, i) => {
+    o.classList.remove('selected');
+    if (i === idx) o.classList.add('selected');
+  });
+
+  // We don't know the correct answer yet on client side; mark selected and allow next
+  opts.forEach(o => o.classList.add('selected-final'));
+  document.getElementById('quiz-nav').style.display = 'flex';
+}
+
+function nextQuestion() {
+  if (!currentQuiz) return;
+  if (currentQuiz.currentQ + 1 >= currentQuiz.questions.length) {
+    submitQuiz();
+  } else {
+    currentQuiz.currentQ++;
+    renderQuizQuestion();
+  }
+}
+
+async function submitQuiz() {
+  const content = document.getElementById('quest-modal-content');
+  content.innerHTML = `<div class="modal-handle"></div>
+    <div style="text-align:center;padding:40px 0">
+      <div class="skeleton skel-circle" style="width:64px;height:64px;margin:0 auto 16px"></div>
+      <div class="skeleton skel-line w60" style="margin:0 auto"></div>
+    </div>`;
+
+  try {
+    const result = await api('POST', `/quests/${currentQuiz.questId}/submit`, {
+      quest_id: currentQuiz.questId,
+      answers: currentQuiz.answers
+    });
+
+    if (result.passed) {
+      fireConfetti();
+      toast('success', 'Quest Completada!', `+${result.xp_earned} XP ganados`);
+    }
+
+    content.innerHTML = `<div class="modal-handle"></div>
+      <div class="quiz-result">
+        <div class="quiz-result-icon">${result.passed ? '\uD83C\uDF89' : '\uD83D\uDCDA'}</div>
+        <div class="quiz-result-title">${result.passed ? 'Excelente!' : 'Sigue aprendiendo!'}</div>
+        <div class="quiz-result-score">${result.correct}/${result.total} correctas (${result.score}%)</div>
+        ${result.passed ? `
+        <div class="quiz-result-rewards">
+          <div class="quiz-result-reward xp-anim">
+            <div class="quiz-result-reward-val" style="color:var(--cyan)">+${result.xp_earned}</div>
+            <div class="quiz-result-reward-label">XP</div>
+          </div>
+          <div class="quiz-result-reward xp-anim" style="animation-delay:.2s">
+            <div class="quiz-result-reward-val" style="color:var(--orange)">+${formatTokens(result.token_reward)}</div>
+            <div class="quiz-result-reward-label">LDX</div>
+          </div>
+        </div>
+        ${result.new_levels && result.new_levels.length ? `<div class="pill pill-purple" style="font-size:14px;padding:8px 16px;margin-bottom:12px">LEVEL UP! Nv. ${result.new_levels[result.new_levels.length - 1]}</div>` : ''}
+        ${result.badges_earned && result.badges_earned.length ? result.badges_earned.map(b => `<div class="pill pill-cyan" style="margin:4px">&#127941; ${b.name}</div>`).join('') : ''}
+        ` : `<p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">${result.message}</p>`}
+        <div style="margin-top:8px;color:var(--text-secondary);font-size:13px">Racha: ${result.daily_streak || 0} dias &#128293;</div>
+        <button class="btn btn-primary btn-block" style="margin-top:20px" onclick="closeModal();loadPlayerData();loadQuests()">Continuar</button>
+      </div>`;
+  } catch (e) {
+    content.innerHTML = `<div class="modal-handle"></div>
+      <div style="text-align:center;padding:40px 0">
+        <div style="font-size:48px;margin-bottom:12px">\u26A0\uFE0F</div>
+        <p style="color:var(--text-secondary)">${e.message}</p>
+        <button class="btn btn-secondary" style="margin-top:16px" onclick="closeModal()">Cerrar</button>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Render: NPCs
+// ═══════════════════════════════════════════
+function renderNpcs() {
+  const grid = document.getElementById('npc-grid');
+  if (!state.npcs.length) {
+    grid.innerHTML = '<p style="color:var(--text-secondary)">No hay mentores disponibles</p>';
+    return;
+  }
+  grid.innerHTML = state.npcs.map(npc => {
+    const style = NPC_STYLES[npc.id] || { emoji: '\uD83E\uDDD1', css: '' };
+    return `<div class="npc-card" onclick="openChat('${npc.id}')">
+      <div class="npc-avatar ${style.css}">${style.emoji}</div>
+      <div class="npc-info">
+        <div class="npc-name">${npc.name}</div>
+        <div class="npc-role">${npc.role}</div>
+        <div class="npc-specialty">${npc.specialty}</div>
+      </div>
+      <span style="font-size:18px;color:var(--text-muted)">&#8250;</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  Chat
+// ═══════════════════════════════════════════
+function openChat(npcId) {
+  const npc = state.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  state.currentNpc = npc;
+  const style = NPC_STYLES[npc.id] || { emoji: '\uD83E\uDDD1', css: '' };
+
+  document.getElementById('chat-npc-name').textContent = npc.name;
+  document.getElementById('chat-npc-role').textContent = npc.role;
+  const avatarEl = document.getElementById('chat-avatar');
+  avatarEl.textContent = style.emoji;
+  avatarEl.className = `npc-avatar avatar-sm ${style.css}`;
+
+  const msgs = document.getElementById('chat-messages');
+  // Restore chat history or show welcome
+  if (!state.chatHistory[npcId]) {
+    state.chatHistory[npcId] = [];
+    msgs.innerHTML = `<div class="chat-msg npc">
+      <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
+      <div><div class="chat-msg-bubble">Hola${state.username ? ', ' + escapeHtml(state.username) : ''}! Soy ${escapeHtml(npc.name)}, tu ${escapeHtml(npc.role)}. Preguntame lo que quieras sobre ${escapeHtml(npc.specialty)}. Estoy aqui para ayudarte a aprender! &#128640;</div></div>
+    </div>`;
+  } else {
+    renderChatHistory(npcId);
+  }
+
+  // Suggestions
+  const suggestions = getSuggestions(npcId);
+  document.getElementById('chat-suggestions').innerHTML = suggestions.map(s =>
+    `<div class="suggestion-pill" onclick="sendSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>`
+  ).join('');
+
+  document.getElementById('chat-screen').classList.add('open');
+  document.getElementById('chat-input').focus();
+}
+
+function getSuggestions(npcId) {
+  const map = {
+    professor_luna: ['Como hago un presupuesto?', 'Que es la regla 50/30/20?', 'Tips para ahorrar'],
+    trader_rex: ['Que es un ETF?', 'Como empiezo a invertir?', 'Que es diversificacion?'],
+    crypto_sage: ['Que es DeFi?', 'Es seguro Bitcoin?', 'Que es un smart contract?'],
+    credit_fox: ['Como mejoro mi credito?', 'Que es un APR?', 'Metodo avalancha vs bola de nieve?'],
+  };
+  return map[npcId] || ['Hola!', 'Explicame algo basico', 'Dame un consejo'];
+}
+
+function closeChat() {
+  document.getElementById('chat-screen').classList.remove('open');
+  state.currentNpc = null;
+}
+
+function renderChatHistory(npcId) {
+  const msgs = document.getElementById('chat-messages');
+  const style = NPC_STYLES[npcId] || { emoji: '\uD83E\uDDD1', css: '' };
+  const history = state.chatHistory[npcId] || [];
+  msgs.innerHTML = history.map(m => {
+    if (m.role === 'user') {
+      return `<div class="chat-msg user"><div><div class="chat-msg-bubble">${escapeHtml(m.content)}</div></div></div>`;
+    } else {
+      return `<div class="chat-msg npc">
+        <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
+        <div><div class="chat-msg-bubble">${escapeHtml(m.content)}</div>
+        ${m.xp ? `<div class="chat-msg-xp">+${m.xp} XP</div>` : ''}</div>
+      </div>`;
+    }
+  }).join('');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendSuggestion(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  if (!message || !state.currentNpc) return;
+  input.value = '';
+
+  const npcId = state.currentNpc.id;
+  const style = NPC_STYLES[npcId] || { emoji: '\uD83E\uDDD1', css: '' };
+  if (!state.chatHistory[npcId]) state.chatHistory[npcId] = [];
+  state.chatHistory[npcId].push({ role: 'user', content: message });
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML += `<div class="chat-msg user"><div><div class="chat-msg-bubble">${escapeHtml(message)}</div></div></div>`;
+
+  // Typing indicator
+  msgs.innerHTML += `<div class="chat-msg npc" id="typing-msg">
+    <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
+    <div><div class="chat-msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>
+  </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  document.getElementById('chat-send-btn').disabled = true;
+
+  try {
+    const data = await api('POST', '/npc/chat', { npc_id: npcId, message });
+    document.getElementById('typing-msg')?.remove();
+
+    state.chatHistory[npcId].push({ role: 'npc', content: data.message, xp: data.xp_earned });
+
+    msgs.innerHTML += `<div class="chat-msg npc" style="animation:fadeSlide .3s ease">
+      <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
+      <div><div class="chat-msg-bubble">${escapeHtml(data.message)}</div>
+      ${data.xp_earned ? `<div class="chat-msg-xp">+${data.xp_earned} XP</div>` : ''}</div>
+    </div>`;
+
+    if (data.xp_earned) toast('info', 'XP por chat', `+${data.xp_earned} XP con ${data.npc_name}`);
+
+    // Update suggestions
+    if (data.suggested_actions && data.suggested_actions.length) {
+      document.getElementById('chat-suggestions').innerHTML = data.suggested_actions.slice(0, 3).map(s =>
+        `<div class="suggestion-pill" onclick="sendSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>`
+      ).join('');
+    }
+  } catch (e) {
+    document.getElementById('typing-msg')?.remove();
+    msgs.innerHTML += `<div class="chat-msg npc">
+      <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
+      <div><div class="chat-msg-bubble" style="color:var(--red)">Error: ${e.message}</div></div>
+    </div>`;
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('chat-send-btn').disabled = false;
+  input.focus();
+}
+
+// ═══════════════════════════════════════════
+//  Render: Leaderboard
+// ═══════════════════════════════════════════
+function renderLeaderboard() {
+  const lb = state.leaderboard;
+  if (!lb || !lb.entries.length) {
+    document.getElementById('rank-podium').innerHTML = '';
+    document.getElementById('rank-list').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">No hay jugadores todavia. Se el primero!</p>';
+    return;
+  }
+
+  const entries = lb.entries;
+  // Podium (top 3)
+  const podium = document.getElementById('rank-podium');
+  const top3 = entries.slice(0, 3);
+  // Reorder for visual: 2nd, 1st, 3rd
+  const podiumOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]] :
+                      top3.length >= 2 ? [top3[1], top3[0]] : [top3[0]];
+  const podiumClasses = top3.length >= 3 ? ['second','first','third'] :
+                         top3.length >= 2 ? ['second','first'] : ['first'];
+  const rankColors = { first: 'gold', second: 'silver', third: 'bronze' };
+
+  podium.innerHTML = podiumOrder.map((p, i) => {
+    const cls = podiumClasses[i];
+    if (!p) return '';
+    return `<div class="podium-item ${cls}">
+      <div class="podium-rank ${rankColors[cls]}">#${p.rank}</div>
+      <div class="avatar ${cls === 'first' ? '' : 'avatar-sm'}">${escapeHtml(p.username[0]).toUpperCase()}</div>
+      <div class="podium-name">${escapeHtml(p.username)}</div>
+      <div class="podium-xp">Nv.${p.level} - ${p.xp} XP</div>
+      <div class="podium-bar ${cls}"></div>
+    </div>`;
+  }).join('');
+
+  // Rest of list (4+)
+  const rest = entries.slice(3);
+  const list = document.getElementById('rank-list');
+  list.innerHTML = rest.map(p => {
+    const isMe = p.wallet_address === state.wallet;
+    return `<div class="rank-item ${isMe ? 'is-me' : ''}">
+      <div class="rank-num">${p.rank}</div>
+      <div class="avatar avatar-sm">${escapeHtml(p.username[0]).toUpperCase()}</div>
+      <div class="rank-info">
+        <div class="rank-name">${escapeHtml(p.username)} ${isMe ? '<span class="rank-me-badge">TU</span>' : ''}</div>
+        <div class="rank-meta"><span>Nv. ${p.level}</span><span>${p.badges_count} insignias</span></div>
+      </div>
+      <div class="rank-xp">${p.xp} XP</div>
+    </div>`;
+  }).join('');
+
+  // Also add "you" indicator if in top 3
+  const meInTop3 = entries.slice(0, 3).find(e => e.wallet_address === state.wallet);
+  if (meInTop3) {
+    // Add a small indicator below podium
+    list.innerHTML = `<div class="rank-item is-me" style="margin-bottom:8px">
+      <div class="rank-num">${meInTop3.rank}</div>
+      <div class="avatar avatar-sm">${escapeHtml(meInTop3.username[0]).toUpperCase()}</div>
+      <div class="rank-info">
+        <div class="rank-name">${escapeHtml(meInTop3.username)} <span class="rank-me-badge">TU</span></div>
+        <div class="rank-meta"><span>Nv. ${meInTop3.level}</span></div>
+      </div>
+      <div class="rank-xp">${meInTop3.xp} XP</div>
+    </div>` + list.innerHTML;
+  }
+}
+
+function setRankTab(tab, el) {
+  document.querySelectorAll('.rank-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  if (tab === 'teams') {
+    loadTeamLeaderboard();
+  } else {
+    loadLeaderboard();
+  }
+}
+
+async function loadTeamLeaderboard() {
+  try {
+    const data = await api('GET', '/leaderboard/teams');
+    const list = document.getElementById('rank-list');
+    document.getElementById('rank-podium').innerHTML = '';
+    if (!data.teams || !data.teams.length) {
+      list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">No hay equipos todavia</p>';
+      return;
+    }
+    list.innerHTML = data.teams.map(t => `<div class="rank-item">
+      <div class="rank-num">${t.rank}</div>
+      <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">${t.name[0].toUpperCase()}</div>
+      <div class="rank-info">
+        <div class="rank-name">${t.name}</div>
+        <div class="rank-meta"><span>${t.member_count} miembros</span></div>
+      </div>
+      <div class="rank-xp">${t.total_xp} XP</div>
+    </div>`).join('');
+  } catch (e) { /* ignore */ }
+}
+
+// ═══════════════════════════════════════════
+//  Render: Profile
+// ═══════════════════════════════════════════
+function renderProfile() {
+  const p = state.player;
+  const pr = state.progress;
+  if (!p || !pr) return;
+
+  document.getElementById('profile-avatar').textContent = p.username[0].toUpperCase();
+  document.getElementById('profile-username').textContent = p.username;
+  document.getElementById('profile-level').textContent = `Nv. ${p.level}`;
+  document.getElementById('profile-xp-text').textContent = `${pr.xp} / ${pr.xp_to_next_level} XP`;
+  document.getElementById('profile-xp-pct').textContent = `${pr.progress_percent}%`;
+  document.getElementById('profile-xp-fill').style.width = `${pr.progress_percent}%`;
+  document.getElementById('profile-wallet').textContent = state.wallet;
+
+  // Stats
+  document.getElementById('profile-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-card-icon">&#9889;</div><div class="stat-card-val">${pr.xp}</div><div class="stat-card-label">XP Total</div></div>
+    <div class="stat-card"><div class="stat-card-icon">&#127919;</div><div class="stat-card-val">${pr.total_quests_completed}</div><div class="stat-card-label">Quests</div></div>
+    <div class="stat-card"><div class="stat-card-icon">&#128293;</div><div class="stat-card-val">${pr.daily_streak}</div><div class="stat-card-label">Racha</div></div>
+    <div class="stat-card"><div class="stat-card-icon">&#127941;</div><div class="stat-card-val">${pr.badges_count}</div><div class="stat-card-label">Insignias</div></div>`;
+
+  // Badges
+  const earnedIds = new Set((p.badges || []).map(b => b.id));
+  document.getElementById('badges-grid').innerHTML = ALL_BADGES.map(b => {
+    const earned = earnedIds.has(b.id);
+    return `<div class="badge-item">
+      <div class="badge-icon rarity-${b.rarity} ${earned ? 'earned' : 'locked'}">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+    </div>`;
+  }).join('');
+
+  // Curriculum
+  const currColors = ['var(--green)','var(--cyan)','var(--yellow)','var(--red)','var(--purple)','var(--orange)'];
+  document.getElementById('curriculum-list').innerHTML = CATS.map(c => {
+    const done = pr.lesson_progress[String(c.id)] || 0;
+    const pct = Math.round((done / c.lessons) * 100);
+    return `<div class="curriculum-item">
+      <div class="curriculum-icon">${c.icon}</div>
+      <div class="curriculum-info">
+        <div class="curriculum-name">${c.name}</div>
+        <div class="curriculum-bar"><div class="curriculum-fill" style="width:${pct}%;background:${currColors[c.id]}"></div></div>
+      </div>
+      <div class="curriculum-pct" style="color:${currColors[c.id]}">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Staking
+  const stakeCard = document.getElementById('stake-card');
+  if (pr.staking_active && p.staking) {
+    stakeCard.innerHTML = `<div class="stake-active">
+      <div class="stake-title">&#128176; Staking Activo</div>
+      <div class="stake-multiplier">${(p.staking.bonus_multiplier / 100).toFixed(2)}x Multiplicador</div>
+      <div class="stake-info">${p.staking.amount} LDX bloqueados</div>
+      <div class="stake-info">Stakeado: ${new Date(p.staking.staked_at).toLocaleDateString('es')}</div>
+      <div class="stake-info">Desbloqueo: ${new Date(p.staking.unlock_at).toLocaleDateString('es')}</div>
+    </div>`;
+  } else {
+    stakeCard.innerHTML = `<div class="stake-title">&#128176; Haz Staking de LDX</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">No tienes tokens en staking. Bloquea tokens para ganar multiplicadores de recompensa.</p>
+      <div class="stake-form">
+        <div class="stake-row" style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="number" id="stake-amount" placeholder="Cantidad LDX" min="1" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:14px">
+          <select id="stake-days" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:14px">
+            <option value="7">7 dias (1.30x)</option>
+            <option value="30">30 dias (1.60x)</option>
+            <option value="90">90 dias (2.0x)</option>
+            <option value="365">365 dias (2.0x)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" onclick="handleStake()">Stakear</button>
+      </div>`;
+  }
+}
+
+async function handleStake() {
+  const amount = parseInt(document.getElementById('stake-amount').value);
+  const daysEl = document.getElementById('stake-days');
+  const days = parseInt(daysEl.value);
+  if (!amount || amount < 1) {
+    toast('error', 'Error', 'Ingresa una cantidad valida de LDX');
+    return;
+  }
+  try {
+    const result = await api('POST', '/staking/stake', { amount, duration_days: days });
+    const unlockDate = result.unlock_at ? new Date(result.unlock_at).toLocaleDateString('es') : '';
+    const multiplier = result.bonus_multiplier || '';
+    toast('success', 'Staking Exitoso!', `${amount} LDX bloqueados${multiplier ? ' - Multiplicador: ' + multiplier : ''}${unlockDate ? ' - Desbloqueo: ' + unlockDate : ''}`);
+    await loadPlayerData();
+  } catch (e) {
+    toast('error', 'Error', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Toast System
+// ═══════════════════════════════════════════
+function toast(type, title, msg) {
+  const container = document.getElementById('toast-container');
+  const icons = { success: '\u2705', error: '\u274C', info: '\u2139\uFE0F', warning: '\u26A0\uFE0F' };
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  container.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+// ═══════════════════════════════════════════
+//  Confetti
+// ═══════════════════════════════════════════
+function fireConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#8b5cf6','#06b6d4','#f97316','#22c55e','#eab308','#ec4899','#ef4444'];
+  for (let i = 0; i < 120; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 4 + 2,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1,
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      if (p.opacity <= 0) return;
+      alive = true;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.rot += p.rotSpeed;
+      if (frame > 60) p.opacity -= 0.01;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.globalAlpha = p.opacity;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 200) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
+}
+
+// ═══════════════════════════════════════════
+//  Utility
+// ═══════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════════
+(function init() {
+  if (state.token && state.wallet) {
+    enterApp();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+})();
+</script>
+</body>
+</html>

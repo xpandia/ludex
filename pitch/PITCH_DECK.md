@@ -1,10 +1,10 @@
-# LUDEX — Pitch Deck
+# LUDEX -- Pitch Deck
 ### Aprende jugando. Gana viviendo.
 #### OneHack 3.0 | AI & GameFi Edition
 
 ---
 
-## Slide 1 — The Opening
+## Slide 1 -- The Opening
 
 **"The most powerful person in the world is the storyteller."**
 
@@ -12,30 +12,30 @@ Today, 200 million young people across Latin America are being told a story abou
 
 We are here to change the story.
 
-**LUDEX** — Aprende jugando. Gana viviendo.
+**LUDEX** -- Aprende jugando. Gana viviendo.
 
 ---
 
-## Slide 2 — The Problem
+## Slide 2 -- The Problem
 
 **200 million young people in Latin America have no meaningful financial education.**
 
 - 65% of adults in LATAM cannot answer basic financial literacy questions (S&P/World Bank)
-- Youth unemployment in the region: 23% — the highest in the world
+- Youth unemployment in the region: 23% -- the highest in the world
 - Traditional financial education: textbooks nobody reads, courses nobody finishes, lessons nobody remembers
 - Meanwhile, these same young people spend 3+ hours per day gaming
 
-The system teaches them nothing. The games teach them everything — except what matters.
+The system teaches them nothing. The games teach them everything -- except what matters.
 
 **We looked at this and saw the biggest unlock in education.**
 
 ---
 
-## Slide 3 — The Insight
+## Slide 3 -- The Insight
 
 **People do not avoid learning. They avoid boredom.**
 
-Every blockbuster game proves the same thing: humans will grind for hours, master complex systems, and collaborate with strangers — if the experience is right.
+Every blockbuster game proves the same thing: humans will grind for hours, master complex systems, and collaborate with strangers -- if the experience is right.
 
 Financial literacy is a complex system. It has progression, risk, reward, strategy.
 
@@ -45,72 +45,78 @@ It is already a game. Nobody just built it yet.
 
 ---
 
-## Slide 4 — The Solution
+## Slide 4 -- The Solution
 
-**Ludex is a GameFi RPG where every quest teaches a real financial concept and every achievement earns real on-chain rewards.**
+**Ludex is a GameFi platform where every quest teaches a real financial concept and every achievement earns real on-chain rewards.**
 
-Players enter a living city. Each district is a financial domain:
-- **Market District** — Supply, demand, negotiation
-- **Bank of Ludex** — Compound interest, savings strategies
-- **Insurance Guild** — Risk management, premiums
-- **Portfolio Arena** — Diversification, asset allocation
-- **Tax Season Events** — Tax planning, civic obligations
+Players enter an interactive financial education app with quests across six categories:
+- **Presupuesto** -- Budgeting frameworks, the 50/30/20 rule, expense tracking
+- **Inversiones** -- Asset allocation, compound interest, diversification
+- **Ahorro** -- Savings strategies, emergency funds, goal-based saving
+- **Credito** -- Credit scores, debt management, responsible borrowing
+- **Crypto** -- Blockchain basics, DeFi fundamentals, wallet security
+- **Impuestos** -- Tax planning, civic obligations, deductions
 
-AI-powered NPCs (Claude by Anthropic) adapt every conversation to the player's level. No two learning paths are the same.
+Four AI-powered NPC mentors (Claude by Anthropic) adapt every conversation to the player's level. No two learning paths are the same.
 
 **You do not study finance. You live it.**
 
 ---
 
-## Slide 5 — The Demo
+## Slide 5 -- The Demo
 
 **One more thing...**
 
-*[Live demo moment — see DEMO_SCRIPT.md]*
+*[Live demo moment -- see DEMO_SCRIPT.md]*
 
-A player enters the Market District. An AI merchant greets them. The negotiation begins. By the end, the player understands supply and demand — not because they read it, but because they just lived it.
+A player opens a quest on budgeting. An AI-generated challenge appears -- multiple-choice questions tailored to their level. They answer, pass the challenge, and earn XP and token rewards. Confetti rains down.
 
-They pass the challenge. A credential is minted on OneChain. Their name climbs the leaderboard.
+Then they open a chat with Professor Luna, an AI owl mentor. They ask about the 50/30/20 rule. Luna explains it in conversational Spanish, adapting to their knowledge level.
+
+Their name climbs the leaderboard. A badge is earned.
 
 **That is not a lesson. That is a life skill, earned.**
 
 ---
 
-## Slide 6 — How It Works
+## Slide 6 -- How It Works
 
 ```
-PLAY  ——>  LEARN  ——>  EARN
+PLAY  -->  LEARN  -->  EARN
 ```
 
-1. **PLAY** — Enter the Ludex RPG world. Explore districts. Accept quests.
-2. **LEARN** — Every game mechanic maps to a financial concept. AI NPCs adapt to your knowledge. Story, not slides.
-3. **EARN** — Hit milestones. Pass challenges. Achievements minted on OneChain as soulbound credentials. Top players earn token rewards.
+1. **PLAY** -- Open the Ludex app. Browse quests across 6 financial categories. Accept challenges.
+2. **LEARN** -- AI-generated quizzes test real financial concepts. Four AI NPC mentors provide personalized coaching through chat. A structured curriculum of 23 lessons guides progression.
+3. **EARN** -- Pass challenges to earn XP and LDX tokens. Level up, unlock badges, climb the leaderboard. Achievements recorded on OneChain as verifiable credentials.
 
 The loop is simple. The impact is massive.
 
 ---
 
-## Slide 7 — Technology
+## Slide 7 -- Technology
 
 | Layer | Stack |
 |---|---|
-| **Blockchain** | OneChain (Move-based) — rewards, credentials, leaderboard |
-| **AI Engine** | Claude API (Anthropic) — adaptive NPC dialogue, personalized coaching |
-| **Game Client** | Unity / Godot — 2.5D RPG world |
-| **Frontend** | Next.js + TailwindCSS — dashboard, landing, leaderboard |
-| **Backend** | Node.js — game state, API gateway |
-| **Storage** | IPFS — achievement metadata |
+| **Blockchain** | OneChain (Move) -- LDX token, credentials, leaderboard, staking |
+| **AI Engine** | Claude API (Anthropic) -- adaptive NPC dialogue, AI-generated quiz challenges |
+| **Frontend** | Responsive Web App (HTML/CSS/JS) -- premium landing page + 5-tab game app |
+| **Backend** | Python / FastAPI -- game state, JWT auth, REST API (21 endpoints), SQLite persistence |
 
-**Smart Contracts (Move on OneChain):**
-- `RewardPool.move` — Treasury distributing tokens on verified milestones
-- `Leaderboard.move` — On-chain ranking with seasonal resets
-- `Credential.move` — Soulbound tokens for completed modules
+**Smart Contract (Move on OneChain):**
+- Single comprehensive contract (`ludex_game.move`) -- 878 lines covering:
+  - LDX token with mint/burn/freeze capabilities
+  - Player profiles, XP, leveling, streaks
+  - Quest system across 6 financial categories
+  - Soulbound achievement badges with 5 rarity tiers
+  - Staking with graduated multipliers (1.2x-2x)
+  - On-chain leaderboard with seasonal resets
+  - Teams and social features
 
 This is not a prototype duct-taped together. This is infrastructure for a movement.
 
 ---
 
-## Slide 8 — Market Opportunity
+## Slide 8 -- Market Opportunity
 
 **We sit at the intersection of two exploding markets.**
 
@@ -128,7 +134,7 @@ Nobody owns the intersection. That intersection is ours.
 
 ---
 
-## Slide 9 — Business Model
+## Slide 9 -- Business Model
 
 **Three revenue streams. All aligned with the mission.**
 
@@ -151,13 +157,13 @@ Nobody owns the intersection. That intersection is ours.
 
 ---
 
-## Slide 10 — Traction & Roadmap
+## Slide 10 -- Traction & Roadmap
 
 | Phase | Milestone |
 |---|---|
-| **Hackathon (Now)** | Core loop live: 1 district, AI NPCs, on-chain rewards, leaderboard |
-| **Month 1** | 3 districts, mobile build, tokenomics refinement |
-| **Month 3** | Public beta — Colombia & Mexico, first school pilots |
+| **Hackathon (Now)** | Core loop live: 5 quests, 4 AI NPC mentors, quiz challenges, leaderboard, badges, staking |
+| **Month 1** | Smart contract deployment on OneChain testnet, wallet integration, mobile PWA |
+| **Month 3** | Public beta -- Colombia & Mexico, first school pilots |
 | **Month 6** | Full launch, DAO governance for curriculum, 50K players |
 | **Year 1** | 500K players, partnerships with ministries of education, Series A |
 
@@ -165,21 +171,20 @@ We are not waiting for the market. We are building it.
 
 ---
 
-## Slide 11 — The Team
+## Slide 11 -- The Team
 
 | Role | Focus |
 |---|---|
-| **Product & Design** | Game design, UX, brand identity |
+| **Product & Design** | UX, brand identity, landing page design |
 | **Blockchain Dev** | Move smart contracts on OneChain |
-| **Game Dev** | Unity/Godot world building, core mechanics |
-| **Full-Stack Dev** | Next.js frontend, Node.js backend |
-| **AI Engineer** | Claude API integration, NPC dialogue systems |
+| **Full-Stack Dev** | Python/FastAPI backend, web frontend |
+| **AI Engineer** | Claude API integration, NPC dialogue systems, challenge generation |
 
 We are builders who grew up in Latin America. We know the problem because we lived it. We know games because we grew up in them. And we know blockchain because we are building the future on it.
 
 ---
 
-## Slide 12 — The Close
+## Slide 12 -- The Close
 
 **Here is what we believe.**
 
@@ -187,7 +192,7 @@ Financial literacy is not a nice-to-have. It is the difference between a generat
 
 200 million young people in Latin America deserve better than a PDF and a prayer.
 
-They deserve a world where learning feels like playing and progress pays real dividends — on-chain and in life.
+They deserve a world where learning feels like playing and progress pays real dividends -- on-chain and in life.
 
 **Ludex is that world.**
 
@@ -202,7 +207,7 @@ Aprende jugando. Gana viviendo.
 ---
 
 ### Contact
-- **Hackathon:** OneHack 3.0 — AI & GameFi Edition
+- **Hackathon:** OneHack 3.0 -- AI & GameFi Edition
 - **GitHub:** [Repository Link]
 - **Demo:** [Live Link]
 - **DoraHacks:** [BUIDL Page]

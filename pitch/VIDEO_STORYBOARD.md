@@ -1,4 +1,4 @@
-# LUDEX — Video Storyboard
+# LUDEX -- Video Storyboard
 ### 60-90 Second Pitch Video
 #### OneHack 3.0 | AI & GameFi Edition
 
@@ -9,12 +9,12 @@
 - **Duration:** 75 seconds (target sweet spot)
 - **Aspect Ratio:** 16:9
 - **Resolution:** 1080p minimum
-- **Audio:** Voiceover + subtle ambient music (lo-fi or cinematic synth — NOT stock corporate)
+- **Audio:** Voiceover + subtle ambient music (lo-fi or cinematic synth -- NOT stock corporate)
 - **Tone:** Urgent, warm, inevitable. This is not a startup pitch. This is a movement announcing itself.
 
 ---
 
-## SCENE 1 — THE STAT [0:00 - 0:10]
+## SCENE 1 -- THE STAT [0:00 - 0:10]
 
 **Visual:** Black screen. White text fades in, one line at a time. Typewriter or clean sans-serif.
 
@@ -29,13 +29,13 @@ have no financial education.
 But they spend 3 hours a day gaming.
 ```
 
-**Audio:** Silence. Then a single, low tone — building tension.
+**Audio:** Silence. Then a single, low tone -- building tension.
 
 **Voiceover:** None. Let the text land.
 
 ---
 
-## SCENE 2 — THE QUESTION [0:10 - 0:17]
+## SCENE 2 -- THE QUESTION [0:10 - 0:17]
 
 **Visual:** Text fades out. New text:
 
@@ -43,69 +43,71 @@ But they spend 3 hours a day gaming.
 What if the game WAS the education?
 ```
 
-*Hold for 2 seconds. Then the Ludex logo appears — clean, centered.*
+*Hold for 2 seconds. Then the Ludex logo appears -- clean, centered.*
 
 ```
 LUDEX
 Aprende jugando. Gana viviendo.
 ```
 
-**Audio:** Logo hit — subtle, satisfying sound. Music begins softly (ambient, building).
+**Audio:** Logo hit -- subtle, satisfying sound. Music begins softly (ambient, building).
 
 **Voiceover:** *"This is Ludex."*
 
 ---
 
-## SCENE 3 — THE WORLD [0:17 - 0:35]
+## SCENE 3 -- THE APP [0:17 - 0:35]
 
-**Visual:** Cut to gameplay footage. The Ludex RPG city — alive, colorful, 2.5D. Show the player walking through districts. Quick cuts:
+**Visual:** Screen recording of the actual Ludex app. Quick cuts through real screens:
 
-1. **Wide shot** of the city (2 sec) — districts labeled on screen as the player passes them
-2. **Market District** (3 sec) — player approaching an NPC merchant stall
-3. **AI NPC dialogue** (5 sec) — conversation appearing on screen, AI adapting in real-time. Highlight the NPC's name and "Powered by Claude" subtly in the UI
-4. **Player making a decision** (2 sec) — choosing a negotiation offer
-5. **Quest complete animation** (3 sec) — success, confetti, XP earned
+1. **Landing page hero** (2 sec) -- particles, custom cursor, phone mockup with animated XP bar and quest card. Scroll briefly to show NPC avatars and curriculum tabs.
+2. **App Home tab** (3 sec) -- player card with avatar, level badge, animated XP bar, streak counter. Category grid with 6 financial topics visible.
+3. **Quest list** (2 sec) -- quest cards with colored category borders, star difficulty, XP/token rewards displayed.
+4. **Quiz in progress** (5 sec) -- AI-generated multiple-choice question on screen, progress bar at top, player selecting an answer, clicking "Siguiente".
+5. **Quiz results** (3 sec) -- pass screen with confetti animation, XP earned, tokens rewarded.
+6. **NPC chat** (3 sec) -- Professor Luna chat screen, typing indicator, AI response appearing with educational content about budgeting. Subtle "Powered by Claude" visible.
 
 **Text overlays** (lower third, clean):
-- "Every quest teaches a real financial concept"
-- "AI NPCs adapt to every player"
+- "AI-generated quizzes tailored to your level"
+- "4 AI mentors powered by Claude"
 
 **Voiceover:**
-*"A living RPG city where every district is a financial domain. AI-powered characters adapt to your level. You do not study finance — you negotiate it, invest it, live it."*
+*"An interactive financial education platform with AI-powered quests and mentors. Claude generates personalized challenges. Four AI NPCs coach you through budgeting, investing, crypto, and credit -- adapting to your knowledge in real time."*
 
 ---
 
-## SCENE 4 — THE EARN [0:35 - 0:50]
+## SCENE 4 -- THE EARN [0:35 - 0:50]
 
-**Visual:** Quick sequence:
+**Visual:** Quick sequence from the actual app:
 
-1. **Credential minting** (3 sec) — on-screen notification: "Achievement minted on OneChain." Show the soulbound token visual — badge-like, clean, meaningful
-2. **OneChain explorer** (3 sec) — the real transaction on-chain. Zoom into the credential data
-3. **Leaderboard** (3 sec) — player's name rising. Other players visible. Seasonal rewards displayed
-4. **Player dashboard** (3 sec) — credentials collected, districts explored, progress bar, ranking
-5. **Token reward** (3 sec) — RewardPool distribution animation. Tokens flowing to the player
+1. **Badge earned notification** (3 sec) -- toast notification sliding in after quest completion, badge with glow animation in profile
+2. **Leaderboard** (3 sec) -- podium with gold/silver/bronze, ranked list, "TU" badge next to current player, multiple players visible
+3. **Profile page** (3 sec) -- stats grid (quests completed, badges, streak), curriculum progress bars across 6 categories
+4. **Move contract code** (3 sec) -- quick scroll through `ludex_game.move` in an editor, highlighting LDX token, badge system, staking section
+5. **Staking concept** (3 sec) -- show the profile staking section and overlay text explaining graduated multipliers
 
 **Text overlays:**
-- "Achievements minted on OneChain"
-- "Verifiable. Permanent. Yours."
-- "Top players earn real rewards"
+- "Badges as soulbound credentials on OneChain"
+- "LDX tokens -- earn, stake, grow"
+- "Leaderboard with seasonal rewards"
 
 **Voiceover:**
-*"Every achievement is minted on OneChain — a verifiable credential no one can take from you. Schools, employers, governments can verify what you know. And the best players earn real token rewards from the community treasury."*
+*"Every achievement earns XP, tokens, and badges -- designed to be minted on OneChain as verifiable credentials. Schools, employers, governments can confirm what you know. Stake your tokens for reward multipliers. Climb the leaderboard. Your financial literacy, proven on-chain."*
 
 ---
 
-## SCENE 5 — THE TECH [0:50 - 0:60]
+## SCENE 5 -- THE TECH [0:50 - 0:60]
 
-**Visual:** Clean architecture diagram animating in — not a boring chart. Stylized, on-brand:
+**Visual:** Clean architecture diagram animating in -- stylized, on-brand:
 
 ```
-Player --> Game (Unity/Godot) --> Claude AI (NPCs)
-                |
-         Node.js Backend
-                |
-     OneChain (Move Contracts)
-    RewardPool | Leaderboard | Credential
+Player (Browser) --> Web App (HTML/CSS/JS)
+                          |
+                   FastAPI Backend (Python)  <-->  Claude API (AI NPCs)
+                          |
+                   OneChain (Move Contract)
+                     ludex_game.move
+        LDX Token | Quests | Badges | Staking | Leaderboard
 ```
 
 Each layer lights up as the voiceover mentions it. Fast. Confident. No lingering.
@@ -113,13 +115,13 @@ Each layer lights up as the voiceover mentions it. Fast. Confident. No lingering
 **Text overlay:** "Built on OneChain. Powered by Claude."
 
 **Voiceover:**
-*"Built on OneChain with Move smart contracts. AI NPCs powered by Claude. Three contracts — rewards, leaderboard, credentials. All deployed. All live."*
+*"Built on OneChain with a comprehensive Move smart contract -- 878 lines covering tokens, quests, badges, staking, and leaderboard. Python/FastAPI backend with 21 endpoints and JWT authentication. AI NPCs and challenge generation powered by Claude."*
 
 ---
 
-## SCENE 6 — THE CLOSE [0:60 - 0:75]
+## SCENE 6 -- THE CLOSE [0:60 - 0:75]
 
-**Visual:** Return to the Ludex city. Slow pull-out. The city shrinks, revealing it is inside a phone screen held by a young person. They look up — smiling. Behind them, a school in Latin America.
+**Visual:** Return to the landing page hero section. Slow scroll up to the tagline. The phone mockup animates with the XP bar filling up.
 
 *Fade to black.*
 
@@ -141,7 +143,7 @@ OneHack 3.0 | AI & GameFi Edition
 **Voiceover:**
 *"200 million young people deserve better than a textbook. They deserve a world where learning feels like playing and progress pays real dividends. Ludex. Aprende jugando. Gana viviendo."*
 
-**Audio:** Music peaks and resolves. Clean ending. No fade-out — a definitive stop.
+**Audio:** Music peaks and resolves. Clean ending. No fade-out -- a definitive stop.
 
 ---
 
@@ -152,14 +154,15 @@ OneHack 3.0 | AI & GameFi Edition
 - Recommended sources: Epidemic Sound, Artlist, or original composition if time permits.
 
 ### Voiceover
-- One voice. Calm, clear, confident. Native Spanish speaker doing English VO is fine — the accent adds authenticity for LATAM story.
+- One voice. Calm, clear, confident. Native Spanish speaker doing English VO is fine -- the accent adds authenticity for LATAM story.
 - Record in a quiet room. Phone voice memos work if the room is dead silent.
 
 ### Footage
-- Gameplay footage: screen-record the actual game client at 60fps. No mockups unless absolutely necessary.
-- Dashboard footage: screen-record the real Next.js dashboard.
-- On-chain footage: screen-record real transactions on OneChain explorer.
-- The closing shot (young person with phone): can be stock footage or a quick shoot. Keep it real, not staged.
+- All footage is screen recordings of the actual running app at 60fps.
+- Landing page: record `index.html` served locally with backend running (for live leaderboard data).
+- Game app: record `app.html` -- walk through Home, Quests, NPC chat, Leaderboard, Profile tabs.
+- Smart contract: screen-record scrolling through `ludex_game.move` in VS Code or similar editor.
+- The closing shot can use the landing page hero section or a simple title card.
 
 ### Editing
 - Cut tight. No shot longer than 5 seconds. The rhythm should feel like a trailer, not a tutorial.
@@ -172,7 +175,7 @@ OneHack 3.0 | AI & GameFi Edition
 |---|---|---|
 | 1 - The Stat | 10s | 0:10 |
 | 2 - The Question | 7s | 0:17 |
-| 3 - The World | 18s | 0:35 |
+| 3 - The App | 18s | 0:35 |
 | 4 - The Earn | 15s | 0:50 |
 | 5 - The Tech | 10s | 1:00 |
 | 6 - The Close | 15s | 1:15 |

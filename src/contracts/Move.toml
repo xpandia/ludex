@@ -1,0 +1,17 @@
+[package]
+name = "ludex_game"
+version = "1.0.0"
+authors = ["Ludex Team"]
+
+[addresses]
+ludex = "_"
+
+[dependencies.AptosFramework]
+git = "https://github.com/AOneChain/AOneChain-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dependencies.AptosStdlib]
+git = "https://github.com/AOneChain/AOneChain-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-stdlib"

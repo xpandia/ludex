@@ -12,6 +12,7 @@ import asyncio
 import hashlib
 import json
 import random
+import sqlite3
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -23,7 +24,6 @@ import os
 import re
 import secrets
 
-import anthropic
 import httpx
 import structlog
 from cachetools import TTLCache
@@ -181,6 +181,7 @@ class PlayerResponse(BaseModel):
     badges: list[dict[str, Any]] = []
     team_id: str | None = None
     registered_at: str = ""
+    staking: dict[str, Any] | None = None
 
 
 class QuestCreate(BaseModel):
@@ -213,7 +214,6 @@ class QuestResponse(BaseModel):
 
 
 class QuizAnswer(BaseModel):
-    quest_id: str
     answers: list[int]  # indices of chosen answers
 
 
@@ -277,27 +277,543 @@ class AnalyticsResponse(BaseModel):
 
 
 # ──────────────────────────────────────────────
-#  In-memory stores (swap for DB in production)
+#  SQLite Database Layer
 # ──────────────────────────────────────────────
 
-players: dict[str, dict[str, Any]] = {}
-quests: dict[str, dict[str, Any]] = {}
-teams: dict[str, dict[str, Any]] = {}
-leaderboard_cache = TTLCache(maxsize=1, ttl=60)
-chat_histories: dict[str, list[dict[str, str]]] = {}  # player+npc -> messages
-analytics_events: list[dict[str, Any]] = []
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ludex.db")
+
+def _get_db() -> sqlite3.Connection:
+    """Get a new SQLite connection with row factory."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
+    return conn
+
+
+def _init_db() -> None:
+    """Create all tables if they don't exist."""
+    conn = _get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS players (
+            wallet_address TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            xp INTEGER NOT NULL DEFAULT 0,
+            level INTEGER NOT NULL DEFAULT 1,
+            total_quests_completed INTEGER NOT NULL DEFAULT 0,
+            daily_streak INTEGER NOT NULL DEFAULT 0,
+            longest_streak INTEGER NOT NULL DEFAULT 0,
+            last_activity_ts REAL NOT NULL DEFAULT 0,
+            registered_at TEXT NOT NULL,
+            team_id TEXT,
+            staking_amount INTEGER,
+            staking_staked_at TEXT,
+            staking_unlock_at TEXT,
+            staking_bonus_multiplier INTEGER,
+            lesson_progress TEXT NOT NULL DEFAULT '{}',
+            chat_xp_today INTEGER NOT NULL DEFAULT 0,
+            chat_xp_last_reset TEXT NOT NULL DEFAULT '',
+            friends TEXT NOT NULL DEFAULT '[]'
+        );
+
+        CREATE TABLE IF NOT EXISTS quests (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category INTEGER NOT NULL,
+            category_name TEXT NOT NULL,
+            difficulty INTEGER NOT NULL,
+            xp_reward INTEGER NOT NULL,
+            token_reward INTEGER NOT NULL,
+            required_level INTEGER NOT NULL DEFAULT 1,
+            expires_at TEXT,
+            is_daily INTEGER NOT NULL DEFAULT 0,
+            is_team_quest INTEGER NOT NULL DEFAULT 0,
+            questions TEXT NOT NULL DEFAULT '[]',
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS quest_completions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wallet_address TEXT NOT NULL,
+            quest_id TEXT NOT NULL,
+            score REAL NOT NULL,
+            xp_earned INTEGER NOT NULL,
+            token_reward INTEGER NOT NULL,
+            completed_at TEXT NOT NULL,
+            FOREIGN KEY (wallet_address) REFERENCES players(wallet_address),
+            FOREIGN KEY (quest_id) REFERENCES quests(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS chat_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wallet_address TEXT NOT NULL,
+            npc_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (wallet_address) REFERENCES players(wallet_address)
+        );
+
+        CREATE TABLE IF NOT EXISTS teams (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            leader TEXT NOT NULL,
+            total_xp INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (leader) REFERENCES players(wallet_address)
+        );
+
+        CREATE TABLE IF NOT EXISTS team_members (
+            team_id TEXT NOT NULL,
+            wallet_address TEXT NOT NULL,
+            joined_at TEXT NOT NULL,
+            PRIMARY KEY (team_id, wallet_address),
+            FOREIGN KEY (team_id) REFERENCES teams(id),
+            FOREIGN KEY (wallet_address) REFERENCES players(wallet_address)
+        );
+
+        CREATE TABLE IF NOT EXISTS staking (
+            wallet_address TEXT PRIMARY KEY,
+            amount INTEGER NOT NULL,
+            staked_at TEXT NOT NULL,
+            unlock_at TEXT NOT NULL,
+            bonus_multiplier INTEGER NOT NULL,
+            FOREIGN KEY (wallet_address) REFERENCES players(wallet_address)
+        );
+
+        CREATE TABLE IF NOT EXISTS badges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wallet_address TEXT NOT NULL,
+            badge_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL,
+            rarity INTEGER NOT NULL DEFAULT 0,
+            earned_at TEXT NOT NULL,
+            FOREIGN KEY (wallet_address) REFERENCES players(wallet_address),
+            UNIQUE(wallet_address, badge_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS analytics_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type TEXT NOT NULL,
+            data TEXT NOT NULL,
+            timestamp TEXT NOT NULL
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+
+# ──────────────────────────────────────────────
+#  DB helper functions
+# ──────────────────────────────────────────────
+
+def _db_get_player(wallet: str) -> dict[str, Any] | None:
+    conn = _get_db()
+    row = conn.execute("SELECT * FROM players WHERE wallet_address = ?", (wallet,)).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    p = dict(row)
+    p["lesson_progress"] = json.loads(p["lesson_progress"])
+    p["friends"] = json.loads(p["friends"])
+    # Reconstruct staking dict
+    if p["staking_amount"] is not None:
+        p["staking"] = {
+            "amount": p["staking_amount"],
+            "staked_at": p["staking_staked_at"],
+            "unlock_at": p["staking_unlock_at"],
+            "bonus_multiplier": p["staking_bonus_multiplier"],
+        }
+    else:
+        p["staking"] = None
+    # Get badges
+    conn2 = _get_db()
+    badge_rows = conn2.execute("SELECT badge_id, name, description, rarity, earned_at FROM badges WHERE wallet_address = ?", (wallet,)).fetchall()
+    conn2.close()
+    p["badges"] = [{"id": b["badge_id"], "name": b["name"], "description": b["description"], "rarity": b["rarity"], "earned_at": b["earned_at"]} for b in badge_rows]
+    # Get completed quests
+    conn3 = _get_db()
+    comp_rows = conn3.execute("SELECT quest_id FROM quest_completions WHERE wallet_address = ?", (wallet,)).fetchall()
+    conn3.close()
+    p["completed_quests"] = [r["quest_id"] for r in comp_rows]
+    return p
+
+
+def _db_create_player(wallet: str, username: str) -> dict[str, Any]:
+    now = _now_iso()
+    lesson_progress = {str(cat.value): 0 for cat in LessonCategory}
+    conn = _get_db()
+    conn.execute(
+        """INSERT INTO players (wallet_address, username, xp, level, total_quests_completed,
+            daily_streak, longest_streak, last_activity_ts, registered_at, lesson_progress,
+            chat_xp_today, chat_xp_last_reset, friends)
+            VALUES (?, ?, 0, 1, 0, 0, 0, ?, ?, ?, 0, ?, '[]')""",
+        (wallet, username, time.time(), now, json.dumps(lesson_progress), now),
+    )
+    conn.commit()
+    conn.close()
+    return _db_get_player(wallet)
+
+
+def _db_update_player(player: dict[str, Any]) -> None:
+    conn = _get_db()
+    staking = player.get("staking")
+    conn.execute(
+        """UPDATE players SET username=?, xp=?, level=?, total_quests_completed=?,
+            daily_streak=?, longest_streak=?, last_activity_ts=?,
+            team_id=?, staking_amount=?, staking_staked_at=?, staking_unlock_at=?,
+            staking_bonus_multiplier=?, lesson_progress=?, chat_xp_today=?,
+            chat_xp_last_reset=?, friends=?
+            WHERE wallet_address=?""",
+        (
+            player["username"], player["xp"], player["level"],
+            player["total_quests_completed"], player["daily_streak"],
+            player["longest_streak"], player["last_activity_ts"],
+            player.get("team_id"),
+            staking["amount"] if staking else None,
+            staking["staked_at"] if staking else None,
+            staking["unlock_at"] if staking else None,
+            staking["bonus_multiplier"] if staking else None,
+            json.dumps(player["lesson_progress"]),
+            player.get("chat_xp_today", 0),
+            player.get("chat_xp_last_reset", ""),
+            json.dumps(player.get("friends", [])),
+            player["wallet_address"],
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _db_get_quest(quest_id: str) -> dict[str, Any] | None:
+    conn = _get_db()
+    row = conn.execute("SELECT * FROM quests WHERE id = ?", (quest_id,)).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    q = dict(row)
+    q["questions"] = json.loads(q["questions"])
+    q["is_daily"] = bool(q["is_daily"])
+    q["is_team_quest"] = bool(q["is_team_quest"])
+    return q
+
+
+def _db_create_quest(quest: dict[str, Any]) -> None:
+    conn = _get_db()
+    conn.execute(
+        """INSERT INTO quests (id, title, description, category, category_name, difficulty,
+            xp_reward, token_reward, required_level, expires_at, is_daily, is_team_quest,
+            questions, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            quest["id"], quest["title"], quest["description"], quest["category"],
+            quest["category_name"], quest["difficulty"], quest["xp_reward"],
+            quest["token_reward"], quest["required_level"], quest.get("expires_at"),
+            int(quest.get("is_daily", False)), int(quest.get("is_team_quest", False)),
+            json.dumps(quest.get("questions", [])), quest["created_at"],
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _db_list_quests(category: int | None = None, difficulty: int | None = None, level: int | None = None) -> list[dict[str, Any]]:
+    conn = _get_db()
+    query = "SELECT * FROM quests WHERE 1=1"
+    params: list[Any] = []
+    if category is not None:
+        query += " AND category = ?"
+        params.append(category)
+    if difficulty is not None:
+        query += " AND difficulty = ?"
+        params.append(difficulty)
+    if level is not None:
+        query += " AND required_level <= ?"
+        params.append(level)
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    result = []
+    for row in rows:
+        q = dict(row)
+        q["questions"] = json.loads(q["questions"])
+        q["is_daily"] = bool(q["is_daily"])
+        q["is_team_quest"] = bool(q["is_team_quest"])
+        result.append(q)
+    return result
+
+
+def _db_record_completion(wallet: str, quest_id: str, score: float, xp_earned: int, token_reward: int) -> None:
+    conn = _get_db()
+    conn.execute(
+        "INSERT INTO quest_completions (wallet_address, quest_id, score, xp_earned, token_reward, completed_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (wallet, quest_id, score, xp_earned, token_reward, _now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _db_has_completed_quest(wallet: str, quest_id: str) -> bool:
+    conn = _get_db()
+    row = conn.execute("SELECT 1 FROM quest_completions WHERE wallet_address = ? AND quest_id = ?", (wallet, quest_id)).fetchone()
+    conn.close()
+    return row is not None
+
+
+def _db_save_badge(wallet: str, badge: dict[str, Any]) -> None:
+    conn = _get_db()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO badges (wallet_address, badge_id, name, description, rarity, earned_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (wallet, badge["id"], badge["name"], badge["description"], badge["rarity"], badge["earned_at"]),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
+def _db_get_badges(wallet: str) -> list[dict[str, Any]]:
+    conn = _get_db()
+    rows = conn.execute("SELECT badge_id, name, description, rarity, earned_at FROM badges WHERE wallet_address = ?", (wallet,)).fetchall()
+    conn.close()
+    return [{"id": r["badge_id"], "name": r["name"], "description": r["description"], "rarity": r["rarity"], "earned_at": r["earned_at"]} for r in rows]
+
+
+def _db_save_chat(wallet: str, npc_id: str, role: str, content: str) -> None:
+    conn = _get_db()
+    conn.execute(
+        "INSERT INTO chat_history (wallet_address, npc_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)",
+        (wallet, npc_id, role, content, _now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _db_get_chat_history(wallet: str, npc_id: str, limit: int = 20) -> list[dict[str, str]]:
+    conn = _get_db()
+    rows = conn.execute(
+        "SELECT role, content FROM chat_history WHERE wallet_address = ? AND npc_id = ? ORDER BY id DESC LIMIT ?",
+        (wallet, npc_id, limit),
+    ).fetchall()
+    conn.close()
+    return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+
+
+def _db_get_team(team_id: str) -> dict[str, Any] | None:
+    conn = _get_db()
+    row = conn.execute("SELECT * FROM teams WHERE id = ?", (team_id,)).fetchone()
+    if row is None:
+        conn.close()
+        return None
+    t = dict(row)
+    members = conn.execute("SELECT wallet_address FROM team_members WHERE team_id = ?", (team_id,)).fetchall()
+    conn.close()
+    t["members"] = [m["wallet_address"] for m in members]
+    return t
+
+
+def _db_create_team(team_id: str, name: str, leader: str, leader_xp: int) -> dict[str, Any]:
+    conn = _get_db()
+    conn.execute("INSERT INTO teams (id, name, leader, total_xp) VALUES (?, ?, ?, ?)", (team_id, name, leader, leader_xp))
+    conn.execute("INSERT INTO team_members (team_id, wallet_address, joined_at) VALUES (?, ?, ?)", (team_id, leader, _now_iso()))
+    conn.commit()
+    conn.close()
+    return _db_get_team(team_id)
+
+
+def _db_list_all_players() -> list[dict[str, Any]]:
+    conn = _get_db()
+    rows = conn.execute("SELECT wallet_address, username, xp, level, total_quests_completed, daily_streak, longest_streak, last_activity_ts, lesson_progress FROM players ORDER BY level DESC, xp DESC").fetchall()
+    conn.close()
+    result = []
+    for row in rows:
+        p = dict(row)
+        p["lesson_progress"] = json.loads(p["lesson_progress"])
+        result.append(p)
+    return result
+
+
+def _track_event(event_type: str, data: dict[str, Any]) -> None:
+    conn = _get_db()
+    conn.execute(
+        "INSERT INTO analytics_events (event_type, data, timestamp) VALUES (?, ?, ?)",
+        (event_type, json.dumps(data), _now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+
+# ──────────────────────────────────────────────
+#  Seed data
+# ──────────────────────────────────────────────
+
+def _seed_quests() -> None:
+    """Seed sample quests if the quests table is empty."""
+    conn = _get_db()
+    count = conn.execute("SELECT COUNT(*) as c FROM quests").fetchone()["c"]
+    conn.close()
+    if count > 0:
+        return
+
+    seed_quests = [
+        {
+            "id": _gen_id(),
+            "title": "Budget Like a Boss",
+            "description": "Learn the 50/30/20 rule and create your first personal budget. Master the fundamentals of money management that separate the financially free from the paycheck-to-paycheck crowd.",
+            "category": LessonCategory.BUDGETING,
+            "category_name": CATEGORY_NAMES[LessonCategory.BUDGETING],
+            "difficulty": QuestDifficulty.BEGINNER,
+            "xp_reward": 50,
+            "token_reward": 10_000_000,
+            "required_level": 1,
+            "expires_at": None,
+            "is_daily": False,
+            "is_team_quest": False,
+            "questions": [
+                {"question": "What does the 50/30/20 rule suggest?", "options": ["A) 50% needs, 30% wants, 20% savings", "B) 50% savings, 30% needs, 20% wants", "C) 50% wants, 30% savings, 20% needs", "D) 50% investments, 30% needs, 20% fun"], "correct_index": 0, "explanation": "The 50/30/20 rule allocates 50% of after-tax income to needs, 30% to wants, and 20% to savings.", "concept": "budgeting basics"},
+                {"question": "What is zero-based budgeting?", "options": ["A) Having zero savings", "B) Every dollar is assigned a purpose", "C) Spending nothing for a month", "D) Starting fresh each year"], "correct_index": 1, "explanation": "Zero-based budgeting means every dollar of income is assigned to a category so income minus expenses equals zero.", "concept": "budgeting methods"},
+                {"question": "Which is considered a 'need' in budgeting?", "options": ["A) Streaming subscriptions", "B) Restaurant meals", "C) Rent or mortgage", "D) New shoes"], "correct_index": 2, "explanation": "Rent/mortgage is a basic need. Streaming, dining out, and discretionary shopping are wants.", "concept": "needs vs wants"},
+            ],
+            "created_at": _now_iso(),
+        },
+        {
+            "id": _gen_id(),
+            "title": "Investing 101: Your Money's First Job",
+            "description": "Understand compound interest, risk vs return, and why starting early is the biggest advantage you have. Turn your savings into a wealth-building machine.",
+            "category": LessonCategory.INVESTING,
+            "category_name": CATEGORY_NAMES[LessonCategory.INVESTING],
+            "difficulty": QuestDifficulty.EASY,
+            "xp_reward": 75,
+            "token_reward": 15_000_000,
+            "required_level": 1,
+            "expires_at": None,
+            "is_daily": False,
+            "is_team_quest": False,
+            "questions": [
+                {"question": "What is compound interest?", "options": ["A) Interest on the principal only", "B) Interest on both principal and accumulated interest", "C) A fixed interest rate", "D) Interest paid monthly"], "correct_index": 1, "explanation": "Compound interest earns on both initial principal and previously accumulated interest, creating exponential growth.", "concept": "compound interest"},
+                {"question": "What does diversification help reduce?", "options": ["A) Returns", "B) Risk", "C) Taxes", "D) Fees"], "correct_index": 1, "explanation": "Diversification spreads investments across assets to reduce impact of any single poor performer.", "concept": "diversification"},
+                {"question": "What is an ETF?", "options": ["A) Electronic Transfer Fund", "B) Exchange-Traded Fund", "C) Extra Tax Filing", "D) Estimated Total Fees"], "correct_index": 1, "explanation": "An ETF (Exchange-Traded Fund) is a basket of securities that trades on a stock exchange like a single stock.", "concept": "investment vehicles"},
+            ],
+            "created_at": _now_iso(),
+        },
+        {
+            "id": _gen_id(),
+            "title": "Emergency Fund Essentials",
+            "description": "Build your financial safety net. Learn how much to save, where to keep it, and why an emergency fund is the foundation of financial stability.",
+            "category": LessonCategory.SAVING,
+            "category_name": CATEGORY_NAMES[LessonCategory.SAVING],
+            "difficulty": QuestDifficulty.BEGINNER,
+            "xp_reward": 50,
+            "token_reward": 10_000_000,
+            "required_level": 1,
+            "expires_at": None,
+            "is_daily": False,
+            "is_team_quest": False,
+            "questions": [
+                {"question": "How many months of expenses should an emergency fund cover?", "options": ["A) 1 month", "B) 3-6 months", "C) 12 months", "D) It doesn't matter"], "correct_index": 1, "explanation": "Experts recommend 3-6 months of living expenses in an easily accessible emergency fund.", "concept": "emergency fund"},
+                {"question": "What is a high-yield savings account?", "options": ["A) A checking account with rewards", "B) A savings account offering above-average interest rates", "C) A stock brokerage account", "D) A certificate of deposit"], "correct_index": 1, "explanation": "High-yield savings accounts pay significantly more interest than traditional ones while keeping funds accessible.", "concept": "savings vehicles"},
+                {"question": "What is the 'pay yourself first' strategy?", "options": ["A) Buy yourself gifts", "B) Save a portion before spending on anything else", "C) Pay off all debts first", "D) Invest in your own business"], "correct_index": 1, "explanation": "Pay yourself first means automatically setting aside savings before spending on other expenses.", "concept": "saving habits"},
+            ],
+            "created_at": _now_iso(),
+        },
+        {
+            "id": _gen_id(),
+            "title": "Credit Score Decoded",
+            "description": "Your credit score is your financial reputation. Learn how it works, what affects it, and strategies to build and maintain excellent credit.",
+            "category": LessonCategory.CREDIT,
+            "category_name": CATEGORY_NAMES[LessonCategory.CREDIT],
+            "difficulty": QuestDifficulty.MEDIUM,
+            "xp_reward": 100,
+            "token_reward": 20_000_000,
+            "required_level": 1,
+            "expires_at": None,
+            "is_daily": False,
+            "is_team_quest": False,
+            "questions": [
+                {"question": "What is a credit utilization ratio?", "options": ["A) Your total debt amount", "B) Percentage of available credit you're using", "C) Number of credit cards you own", "D) Monthly payment amount"], "correct_index": 1, "explanation": "Credit utilization is the percentage of total credit limit in use. Keep it below 30% for a healthy score.", "concept": "credit utilization"},
+                {"question": "Which debt payoff method targets highest interest first?", "options": ["A) Snowball method", "B) Avalanche method", "C) Consolidation", "D) Minimum payment"], "correct_index": 1, "explanation": "The avalanche method prioritizes highest-interest debts first, saving the most money over time.", "concept": "debt strategies"},
+                {"question": "What is the biggest factor in your FICO score?", "options": ["A) Credit mix", "B) Payment history", "C) Length of credit history", "D) New credit inquiries"], "correct_index": 1, "explanation": "Payment history makes up 35% of your FICO score, making it the single most important factor.", "concept": "credit scores"},
+            ],
+            "created_at": _now_iso(),
+        },
+        {
+            "id": _gen_id(),
+            "title": "Crypto Safety & DeFi Basics",
+            "description": "Navigate the world of cryptocurrency safely. Learn about wallets, private keys, common scams, and the basics of decentralized finance.",
+            "category": LessonCategory.CRYPTO,
+            "category_name": CATEGORY_NAMES[LessonCategory.CRYPTO],
+            "difficulty": QuestDifficulty.MEDIUM,
+            "xp_reward": 100,
+            "token_reward": 20_000_000,
+            "required_level": 1,
+            "expires_at": None,
+            "is_daily": False,
+            "is_team_quest": False,
+            "questions": [
+                {"question": "What is a private key in crypto?", "options": ["A) Your username", "B) A password to your exchange", "C) A cryptographic key that controls your assets", "D) Your wallet address"], "correct_index": 2, "explanation": "A private key is a cryptographic secret that proves ownership. Never share it.", "concept": "wallet security"},
+                {"question": "What does 'DYOR' stand for in crypto?", "options": ["A) Do Your Own Research", "B) Double Your Own Returns", "C) Deposit Your Own Resources", "D) Digital Yield On Request"], "correct_index": 0, "explanation": "DYOR means Do Your Own Research. Always investigate before investing in any crypto project.", "concept": "crypto safety"},
+                {"question": "What is a DEX?", "options": ["A) Digital Exchange Index", "B) Decentralized Exchange", "C) Derivative Exchange", "D) Deposit Exchange"], "correct_index": 1, "explanation": "A DEX (Decentralized Exchange) lets you trade crypto directly from your wallet without a central intermediary.", "concept": "DeFi basics"},
+            ],
+            "created_at": _now_iso(),
+        },
+    ]
+
+    for quest in seed_quests:
+        _db_create_quest(quest)
+
+    logger.info("seed_quests_inserted", count=len(seed_quests))
+
+
+# ──────────────────────────────────────────────
+#  NPC Fallback Responses
+# ──────────────────────────────────────────────
+
+NPC_FALLBACK_RESPONSES = {
+    "professor_luna": [
+        "Great question! One of the most important budgeting principles is the 50/30/20 rule: allocate 50% of your income to needs, 30% to wants, and 20% to savings. It sounds simple, but it's incredibly powerful when applied consistently. Start by tracking your spending for just one week and you'll be amazed at what you discover!",
+        "I love your curiosity! Here's something most people don't realize: the difference between being broke and being wealthy often isn't income, it's habits. Small daily choices like bringing lunch from home, automating your savings, or waiting 24 hours before impulse purchases can add up to tens of thousands over a few years.",
+        "Let me share a key insight about saving: the 'pay yourself first' strategy is a game-changer. Before you pay bills or spend on anything else, automatically transfer a portion of every paycheck to savings. Even starting with just 5% makes a huge difference over time thanks to compound growth!",
+        "Here's a tip that changed my students' lives: create a 'fun fund' in your budget! Many people fail at budgeting because they cut out ALL enjoyment. That's not sustainable. Budgeting isn't about restriction, it's about intentional spending. Allocate money for fun guilt-free, and you'll actually stick to your plan.",
+        "Emergency funds are your financial superhero cape! Aim for 3-6 months of essential expenses in a high-yield savings account. I know that sounds like a lot, but start with a mini goal of just $500 to $1,000. That alone can cover most unexpected car repairs or medical bills without reaching for a credit card.",
+    ],
+    "trader_rex": [
+        "Yo, great question! Think of investing like building a sports team. You wouldn't put all your players in one position, right? That's diversification! Spread your investments across stocks, bonds, and maybe some index funds. A diversified portfolio is like having a well-rounded team that can handle any opponent the market throws at you.",
+        "Here's the real MVP play in investing: compound interest. Einstein supposedly called it the eighth wonder of the world. If you invest $200 a month starting at age 20 with an average 7% return, you'd have over $500,000 by age 60. Start late at 30 and it's only about $240,000. Time is your biggest asset!",
+        "Let me keep it real about risk: every investment has it. But here's the cheat code, your time horizon matters most. If you're investing for 20+ years, short-term dips don't matter much. It's like losing one game in a season. What matters is the championship, the long game. Don't panic-sell during market drops!",
+        "Dollar-cost averaging is like training consistently instead of cramming before the big game. Invest a fixed amount regularly regardless of market conditions. Sometimes you buy low, sometimes high, but over time you average out to a solid price. It removes emotion from investing and that's when you win.",
+        "ETFs are the ultimate beginner play. Think of them like a highlight reel of the best stocks bundled together. One ETF can give you exposure to 500+ companies! Low fees, instant diversification, and you can start with just a few bucks. S&P 500 index funds have averaged about 10% annual returns historically. Not bad for a set-it-and-forget-it strategy!",
+    ],
+    "crypto_sage": [
+        "Welcome to the decentralized future! First rule of crypto: not your keys, not your coins. Always secure your private keys and never share them with anyone. Use a hardware wallet for significant holdings. Think of your private key as the master password to your entire financial vault. Lose it and your funds are gone forever.",
+        "DeFi is fascinating but tread carefully. Decentralized exchanges let you trade directly from your wallet, no middleman needed. But always DYOR, Do Your Own Research. Check if smart contracts are audited, look at the team behind the project, and never invest more than you can afford to lose. The crypto space has amazing opportunities and dangerous scams in equal measure.",
+        "Let me break down blockchain simply: imagine a shared Google Doc that everyone can read but nobody can secretly edit. That's basically a blockchain. Every transaction is recorded permanently and transparently. This is why it's revolutionary for finance: it creates trust without needing a central authority like a bank.",
+        "Gas fees are the toll you pay to use a blockchain network. When the network is busy, fees go up, just like surge pricing for ride-shares. To save on gas: transact during off-peak hours, use Layer 2 solutions like rollups, or consider blockchains with lower fees for smaller transactions. Smart timing can save you a lot!",
+        "Here's my take on NFTs and digital ownership: the technology is powerful even if some use cases seem silly. NFTs can represent ownership of real estate, music royalties, gaming items, or identity credentials. The key is understanding what you're actually buying. Is there real utility? Is the community strong? Art is subjective but fundamentals are universal.",
+    ],
+    "credit_fox": [
+        "Let's talk strategy! Your credit score is basically your financial reputation in a three-digit number. The biggest factor? Payment history at 35%. Even one missed payment can tank your score by 100+ points. Set up autopay for at least the minimum on every account. It's the simplest hack to protect your score!",
+        "Here's a pro move: keep your credit utilization below 30%, but ideally under 10%. If your credit limit is $1,000, try to keep your balance under $100 when the statement closes. Some people strategically pay down their balance before the statement date. The lower your utilization, the higher your score climbs!",
+        "The debt avalanche vs snowball debate is classic! Avalanche (paying highest interest first) saves the most money mathematically. But snowball (paying smallest balance first) gives you quick psychological wins that keep you motivated. Pick the one that fits your personality. The best strategy is the one you'll actually stick with!",
+        "Credit cards aren't evil, they're tools. Used wisely, they build your credit history, offer purchase protection, and earn rewards. The golden rule: never carry a balance you can't pay in full each month. That 20%+ APR will eat your rewards alive. If you can't trust yourself yet, start with a secured card and set a spending limit.",
+        "Want to level up your credit game? Become an authorized user on a family member's old, well-maintained credit card. Their positive payment history gets added to your credit report. Also, having a mix of credit types like a credit card plus an installment loan shows lenders you can handle different kinds of debt responsibly.",
+    ],
+}
 
 
 # ──────────────────────────────────────────────
 #  AI client
 # ──────────────────────────────────────────────
 
-ai_client: anthropic.AsyncAnthropic | None = None
+ai_client: Any = None
 
 security_scheme = HTTPBearer(auto_error=False)
 
 # Wallet address regex — 0x followed by 64 hex chars (Aptos / Move style)
 WALLET_RE = re.compile(r"^0x[0-9a-fA-F]{1,64}$")
+
+leaderboard_cache = TTLCache(maxsize=1, ttl=60)
 
 
 def _validate_wallet(wallet: str) -> str:
@@ -382,28 +898,33 @@ def _update_streak(player: dict[str, Any]) -> None:
 
 
 def _get_player_or_404(wallet: str) -> dict[str, Any]:
-    if wallet not in players:
+    player = _db_get_player(wallet)
+    if player is None:
         raise HTTPException(status_code=404, detail="Player not found")
-    return players[wallet]
+    return player
 
 
 def _build_leaderboard() -> list[dict[str, Any]]:
-    sorted_players = sorted(
-        players.values(),
-        key=lambda p: (p["level"], p["xp"]),
-        reverse=True,
-    )
-    return [
-        {
+    conn = _get_db()
+    rows = conn.execute(
+        "SELECT wallet_address, username, xp, level FROM players ORDER BY level DESC, xp DESC LIMIT 100"
+    ).fetchall()
+    conn.close()
+    result = []
+    for i, row in enumerate(rows):
+        p = dict(row)
+        badge_count_conn = _get_db()
+        bc = badge_count_conn.execute("SELECT COUNT(*) as c FROM badges WHERE wallet_address = ?", (p["wallet_address"],)).fetchone()["c"]
+        badge_count_conn.close()
+        result.append({
             "rank": i + 1,
             "wallet_address": p["wallet_address"],
             "username": p["username"],
             "xp": p["xp"],
             "level": p["level"],
-            "badges_count": len(p.get("badges", [])),
-        }
-        for i, p in enumerate(sorted_players[:100])
-    ]
+            "badges_count": bc,
+        })
+    return result
 
 
 # ──────────────────────────────────────────────
@@ -455,9 +976,22 @@ CURRICULUM = {
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ai_client
+    # Initialize database
+    _init_db()
+    _seed_quests()
+    # Try to import and init anthropic, but don't fail if unavailable
     if settings.anthropic_api_key:
-        ai_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-    logger.info("ludex_started", players=len(players))
+        try:
+            import anthropic
+            ai_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        except Exception:
+            logger.warning("anthropic_unavailable", msg="Claude AI features disabled")
+            ai_client = None
+    conn = _get_db()
+    player_count = conn.execute("SELECT COUNT(*) as c FROM players").fetchone()["c"]
+    quest_count = conn.execute("SELECT COUNT(*) as c FROM quests").fetchone()["c"]
+    conn.close()
+    logger.info("ludex_started", players=player_count, quests=quest_count, db=DB_PATH)
     yield
     logger.info("ludex_shutdown")
 
@@ -471,8 +1005,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -484,12 +1018,60 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
+    try:
+        conn = _get_db()
+        player_count = conn.execute("SELECT COUNT(*) as c FROM players").fetchone()["c"]
+        quest_count = conn.execute("SELECT COUNT(*) as c FROM quests").fetchone()["c"]
+        completion_count = conn.execute("SELECT COUNT(*) as c FROM quest_completions").fetchone()["c"]
+        badge_count = conn.execute("SELECT COUNT(*) as c FROM badges").fetchone()["c"]
+        team_count = conn.execute("SELECT COUNT(*) as c FROM teams").fetchone()["c"]
+        chat_count = conn.execute("SELECT COUNT(*) as c FROM chat_history").fetchone()["c"]
+        conn.close()
+        db_status = "connected"
+    except Exception as e:
+        player_count = quest_count = completion_count = badge_count = team_count = chat_count = 0
+        db_status = f"error: {e}"
+
     return {
         "status": "ok",
         "service": "ludex",
         "timestamp": _now_iso(),
-        "players": len(players),
-        "quests": len(quests),
+        "database": db_status,
+        "ai_available": ai_client is not None,
+        "counts": {
+            "players": player_count,
+            "quests": quest_count,
+            "completions": completion_count,
+            "badges": badge_count,
+            "teams": team_count,
+            "chat_messages": chat_count,
+        },
+    }
+
+
+# ══════════════════════════════════════════════
+#  Global stats
+# ══════════════════════════════════════════════
+
+@app.get("/stats")
+async def global_stats():
+    conn = _get_db()
+    player_count = conn.execute("SELECT COUNT(*) as c FROM players").fetchone()["c"]
+    quest_count = conn.execute("SELECT COUNT(*) as c FROM quests").fetchone()["c"]
+    completions = conn.execute("SELECT COUNT(*) as c FROM quest_completions").fetchone()["c"]
+    total_tokens = conn.execute("SELECT COALESCE(SUM(token_reward), 0) as t FROM quest_completions").fetchone()["t"]
+    total_xp = conn.execute("SELECT COALESCE(SUM(xp_earned), 0) as t FROM quest_completions").fetchone()["t"]
+    badge_count = conn.execute("SELECT COUNT(*) as c FROM badges").fetchone()["c"]
+    team_count = conn.execute("SELECT COUNT(*) as c FROM teams").fetchone()["c"]
+    conn.close()
+    return {
+        "total_players": player_count,
+        "total_quests_available": quest_count,
+        "total_quests_completed": completions,
+        "total_tokens_distributed": total_tokens,
+        "total_xp_earned": total_xp,
+        "total_badges_earned": badge_count,
+        "total_teams": team_count,
     }
 
 
@@ -501,36 +1083,14 @@ async def health():
 async def register_player(body: PlayerCreate):
     wallet = _validate_wallet(body.wallet_address)
 
-    if wallet in players:
+    existing = _db_get_player(wallet)
+    if existing is not None:
         raise HTTPException(status_code=409, detail="Player already registered")
 
-    now = _now_iso()
-    player = {
-        "wallet_address": wallet,
-        "username": body.username,
-        "xp": 0,
-        "level": 1,
-        "total_quests_completed": 0,
-        "daily_streak": 0,
-        "longest_streak": 0,
-        "last_activity_ts": time.time(),
-        "registered_at": now,
-        "badges": [],
-        "completed_quests": [],
-        "active_quests": [],
-        "friends": [],
-        "team_id": None,
-        "staking": None,
-        "lesson_progress": {cat.value: 0 for cat in LessonCategory},
-        "chat_xp_today": 0,
-        "chat_xp_last_reset": now,
-    }
-    players[wallet] = player
-
+    player = _db_create_player(wallet, body.username)
     _track_event("player_registered", {"wallet": wallet})
     logger.info("player_registered", wallet=wallet, username=body.username)
 
-    # Issue a JWT so the player can authenticate subsequent requests.
     token = _create_jwt(wallet)
 
     return {
@@ -543,10 +1103,10 @@ async def register_player(body: PlayerCreate):
 async def login(body: PlayerCreate):
     """Authenticate an existing player and return a fresh JWT."""
     wallet = _validate_wallet(body.wallet_address)
-    if wallet not in players:
+    player = _db_get_player(wallet)
+    if player is None:
         raise HTTPException(status_code=404, detail="Player not found. Register first.")
-    stored = players[wallet]
-    if stored["username"] != body.username:
+    if player["username"] != body.username:
         raise HTTPException(status_code=401, detail="Username does not match wallet.")
     return {"token": _create_jwt(wallet)}
 
@@ -555,6 +1115,13 @@ async def login(body: PlayerCreate):
 async def get_player(wallet: str, _caller: str = Depends(_get_current_wallet)):
     player = _get_player_or_404(wallet)
     return PlayerResponse(**{k: v for k, v in player.items() if k in PlayerResponse.model_fields})
+
+
+@app.get("/players/{wallet}/badges")
+async def get_player_badges(wallet: str):
+    """List all badges earned by a player."""
+    badges = _db_get_badges(wallet)
+    return {"wallet": wallet, "badges": badges, "count": len(badges)}
 
 
 @app.get("/players/{wallet}/progress")
@@ -575,6 +1142,15 @@ async def get_player_progress(wallet: str, _caller: str = Depends(_get_current_w
                     available_lessons[CATEGORY_NAMES[cat]] = lesson["title"]
                     break
 
+    # Calculate total tokens earned from quest completions
+    conn = _get_db()
+    tokens_row = conn.execute(
+        "SELECT COALESCE(SUM(token_reward), 0) as t FROM quest_completions WHERE wallet_address = ?",
+        (wallet,),
+    ).fetchone()
+    tokens_earned = tokens_row["t"]
+    conn.close()
+
     return {
         "wallet": wallet,
         "level": player["level"],
@@ -586,8 +1162,9 @@ async def get_player_progress(wallet: str, _caller: str = Depends(_get_current_w
         "total_quests_completed": player["total_quests_completed"],
         "lesson_progress": player["lesson_progress"],
         "available_lessons": available_lessons,
-        "badges_count": len(player["badges"]),
+        "badges_count": len(player.get("badges", [])),
         "staking_active": player["staking"] is not None,
+        "tokens_earned": tokens_earned,
     }
 
 
@@ -596,7 +1173,7 @@ async def get_player_progress(wallet: str, _caller: str = Depends(_get_current_w
 # ══════════════════════════════════════════════
 
 @app.post("/quests", response_model=QuestResponse, status_code=201)
-async def create_quest(body: QuestCreate):
+async def create_quest(body: QuestCreate, wallet: str = Depends(_get_current_wallet)):
     quest_id = _gen_id()
     quest = {
         "id": quest_id,
@@ -605,7 +1182,7 @@ async def create_quest(body: QuestCreate):
         "questions": [],
         "created_at": _now_iso(),
     }
-    quests[quest_id] = quest
+    _db_create_quest(quest)
 
     logger.info("quest_created", quest_id=quest_id, title=body.title)
     return QuestResponse(**quest)
@@ -617,36 +1194,31 @@ async def list_quests(
     difficulty: int | None = None,
     level: int | None = None,
 ):
-    result = list(quests.values())
-    if category is not None:
-        result = [q for q in result if q["category"] == category]
-    if difficulty is not None:
-        result = [q for q in result if q["difficulty"] == difficulty]
-    if level is not None:
-        result = [q for q in result if q["required_level"] <= level]
+    result = _db_list_quests(category=category, difficulty=difficulty, level=level)
     return [QuestResponse(**q) for q in result]
 
 
 @app.get("/quests/{quest_id}", response_model=QuestResponse)
 async def get_quest(quest_id: str):
-    if quest_id not in quests:
+    quest = _db_get_quest(quest_id)
+    if quest is None:
         raise HTTPException(status_code=404, detail="Quest not found")
-    return QuestResponse(**quests[quest_id])
+    return QuestResponse(**quest)
 
 
 @app.post("/quests/{quest_id}/submit")
 async def submit_quest_answers(quest_id: str, body: QuizAnswer, wallet: str = Depends(_get_current_wallet)):
     """Validate quiz answers, award XP and tokens."""
-    if quest_id not in quests:
+    quest = _db_get_quest(quest_id)
+    if quest is None:
         raise HTTPException(status_code=404, detail="Quest not found")
 
     player = _get_player_or_404(wallet)
-    quest = quests[quest_id]
 
     if quest["required_level"] > player["level"]:
         raise HTTPException(status_code=403, detail="Level too low for this quest")
 
-    if quest_id in player["completed_quests"] and not quest["is_daily"]:
+    if _db_has_completed_quest(wallet, quest_id) and not quest["is_daily"]:
         raise HTTPException(status_code=409, detail="Quest already completed")
 
     # Score the answers.
@@ -698,11 +1270,16 @@ async def submit_quest_answers(quest_id: str, body: QuizAnswer, wallet: str = De
     new_levels = _process_level_ups(player)
     _update_streak(player)
     player["total_quests_completed"] += 1
-    player["completed_quests"].append(quest_id)
 
     # Update lesson progress.
     cat_key = str(quest["category"])
     player["lesson_progress"][cat_key] = player["lesson_progress"].get(cat_key, 0) + 1
+
+    # Save player state
+    _db_update_player(player)
+
+    # Record completion
+    _db_record_completion(wallet, quest_id, score_pct, xp_earned, token_reward)
 
     _track_event("quest_completed", {
         "wallet": wallet,
@@ -724,6 +1301,12 @@ async def submit_quest_answers(quest_id: str, body: QuizAnswer, wallet: str = De
         "new_levels": new_levels,
         "badges_earned": badges_earned,
         "daily_streak": player["daily_streak"],
+        "player": {
+            "xp": player["xp"],
+            "level": player["level"],
+            "total_quests_completed": player["total_quests_completed"],
+            "daily_streak": player["daily_streak"],
+        },
         "message": _get_completion_message(score_pct, new_levels),
     }
 
@@ -741,7 +1324,7 @@ def _get_completion_message(score: float, new_levels: list[int]) -> str:
 def _check_badge_eligibility(player: dict[str, Any]) -> list[dict[str, Any]]:
     """Check and award automatic badges based on milestones."""
     earned = []
-    existing_ids = {b["id"] for b in player["badges"]}
+    existing_ids = {b["id"] for b in player.get("badges", [])}
 
     badge_rules = [
         {"id": "first_quest", "name": "First Steps", "desc": "Completed your first quest", "rarity": 0, "check": lambda p: p["total_quests_completed"] >= 1},
@@ -755,9 +1338,10 @@ def _check_badge_eligibility(player: dict[str, Any]) -> list[dict[str, Any]]:
         {"id": "level_50", "name": "Money Master", "desc": "Reached level 50", "rarity": 3, "check": lambda p: p["level"] >= 50},
         {"id": "all_categories", "name": "Renaissance Investor", "desc": "Completed quests in all categories", "rarity": 3, "check": lambda p: all(v > 0 for v in p["lesson_progress"].values())},
         {"id": "staker", "name": "Diamond Hands", "desc": "Staked LDX tokens", "rarity": 1, "check": lambda p: p["staking"] is not None},
-        {"id": "social_5", "name": "Networker", "desc": "Added 5 friends", "rarity": 1, "check": lambda p: len(p["friends"]) >= 5},
+        {"id": "social_5", "name": "Networker", "desc": "Added 5 friends", "rarity": 1, "check": lambda p: len(p.get("friends", [])) >= 5},
     ]
 
+    wallet = player["wallet_address"]
     for rule in badge_rules:
         if rule["id"] not in existing_ids and rule["check"](player):
             badge = {
@@ -767,7 +1351,7 @@ def _check_badge_eligibility(player: dict[str, Any]) -> list[dict[str, Any]]:
                 "rarity": rule["rarity"],
                 "earned_at": _now_iso(),
             }
-            player["badges"].append(badge)
+            _db_save_badge(wallet, badge)
             earned.append(badge)
 
     return earned
@@ -778,7 +1362,7 @@ def _check_badge_eligibility(player: dict[str, Any]) -> list[dict[str, Any]]:
 # ══════════════════════════════════════════════
 
 @app.post("/challenges/generate")
-async def generate_challenge(body: ChallengeGenerateRequest):
+async def generate_challenge(body: ChallengeGenerateRequest, wallet: str = Depends(_get_current_wallet)):
     """Use Claude to generate contextual financial literacy challenges."""
     category_name = CATEGORY_NAMES.get(LessonCategory(body.category), "Finance")
     difficulty_label = QuestDifficulty(body.difficulty).name.title()
@@ -790,7 +1374,10 @@ async def generate_challenge(body: ChallengeGenerateRequest):
     for lesson in relevant_lessons:
         concepts.extend(lesson["key_concepts"])
 
-    prompt = f"""Generate exactly {body.num_questions} multiple-choice quiz questions about {category_name}.
+    # Try AI first, fall back to templates
+    if ai_client is not None:
+        try:
+            prompt = f"""Generate exactly {body.num_questions} multiple-choice quiz questions about {category_name}.
 
 Difficulty: {difficulty_label}
 Player level: {body.player_level} (scale 1-100)
@@ -817,66 +1404,63 @@ Return valid JSON array:
 
 Return ONLY the JSON array, no other text."""
 
-    if ai_client is None:
-        # Fallback: return template questions when no API key.
-        return _fallback_questions(body.category, body.difficulty, body.num_questions)
+            response = await ai_client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            content = response.content[0].text.strip()
 
-    try:
-        response = await ai_client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        content = response.content[0].text.strip()
+            # Parse JSON from response.
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
 
-        # Parse JSON from response.
-        if content.startswith("```"):
-            content = content.split("```")[1]
-            if content.startswith("json"):
-                content = content[4:]
+            questions = json.loads(content)
 
-        questions = json.loads(content)
+            # Create a quest with these questions.
+            quest_id = _gen_id()
+            xp_reward = int(50 * DIFFICULTY_XP_MULTIPLIER[QuestDifficulty(body.difficulty)])
+            token_reward = int(10_000_000 * DIFFICULTY_XP_MULTIPLIER[QuestDifficulty(body.difficulty)])
 
-        # Create a quest with these questions.
-        quest_id = _gen_id()
-        xp_reward = int(50 * DIFFICULTY_XP_MULTIPLIER[QuestDifficulty(body.difficulty)])
-        token_reward = int(10_000_000 * DIFFICULTY_XP_MULTIPLIER[QuestDifficulty(body.difficulty)])
+            quest = {
+                "id": quest_id,
+                "title": f"{category_name} Challenge",
+                "description": f"AI-generated {difficulty_label.lower()} challenge",
+                "category": body.category,
+                "category_name": category_name,
+                "difficulty": body.difficulty,
+                "xp_reward": xp_reward,
+                "token_reward": token_reward,
+                "required_level": body.player_level,
+                "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+                "is_daily": False,
+                "is_team_quest": False,
+                "questions": questions,
+                "created_at": _now_iso(),
+            }
+            _db_create_quest(quest)
 
-        quest = {
-            "id": quest_id,
-            "title": f"{category_name} Challenge",
-            "description": f"AI-generated {difficulty_label.lower()} challenge",
-            "category": body.category,
-            "category_name": category_name,
-            "difficulty": body.difficulty,
-            "xp_reward": xp_reward,
-            "token_reward": token_reward,
-            "required_level": body.player_level,
-            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
-            "is_daily": False,
-            "is_team_quest": False,
-            "questions": questions,
-            "created_at": _now_iso(),
-        }
-        quests[quest_id] = quest
+            return {
+                "quest_id": quest_id,
+                "questions": [
+                    {
+                        "question": q["question"],
+                        "options": q["options"],
+                        "concept": q.get("concept", ""),
+                    }
+                    for q in questions
+                ],
+                "xp_reward": xp_reward,
+                "token_reward": token_reward,
+            }
 
-        return {
-            "quest_id": quest_id,
-            "questions": [
-                {
-                    "question": q["question"],
-                    "options": q["options"],
-                    "concept": q.get("concept", ""),
-                }
-                for q in questions
-            ],
-            "xp_reward": xp_reward,
-            "token_reward": token_reward,
-        }
+        except Exception as e:
+            logger.error("challenge_generation_failed", error=str(e))
 
-    except Exception as e:
-        logger.error("challenge_generation_failed", error=str(e))
-        return _fallback_questions(body.category, body.difficulty, body.num_questions)
+    # Fallback: return template questions when no API key or AI failed.
+    return _fallback_questions(body.category, body.difficulty, body.num_questions)
 
 
 def _fallback_questions(category: int, difficulty: int, num: int) -> dict[str, Any]:
@@ -885,25 +1469,32 @@ def _fallback_questions(category: int, difficulty: int, num: int) -> dict[str, A
         0: [  # Budgeting
             {"question": "What does the 50/30/20 rule suggest?", "options": ["A) 50% needs, 30% wants, 20% savings", "B) 50% savings, 30% needs, 20% wants", "C) 50% wants, 30% savings, 20% needs", "D) 50% investments, 30% needs, 20% fun"], "correct_index": 0, "explanation": "The 50/30/20 rule allocates 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment.", "concept": "budgeting basics"},
             {"question": "What is zero-based budgeting?", "options": ["A) Having zero savings", "B) Every dollar is assigned a purpose", "C) Spending nothing for a month", "D) Starting fresh each year"], "correct_index": 1, "explanation": "Zero-based budgeting means allocating every dollar of income to a specific category so income minus expenses equals zero.", "concept": "budgeting methods"},
+            {"question": "What is the first step in creating a budget?", "options": ["A) Cut all expenses", "B) Track your current spending", "C) Open a savings account", "D) Cancel subscriptions"], "correct_index": 1, "explanation": "Before you can budget effectively, you need to understand where your money is currently going by tracking spending.", "concept": "budgeting basics"},
         ],
         1: [  # Investing
             {"question": "What is compound interest?", "options": ["A) Interest on the principal only", "B) Interest on both principal and accumulated interest", "C) A fixed interest rate", "D) Interest paid monthly"], "correct_index": 1, "explanation": "Compound interest is earned on both the initial principal and previously accumulated interest, creating exponential growth over time.", "concept": "compound interest"},
             {"question": "What does diversification help reduce?", "options": ["A) Returns", "B) Risk", "C) Taxes", "D) Fees"], "correct_index": 1, "explanation": "Diversification spreads investments across different assets to reduce the impact of any single investment's poor performance.", "concept": "diversification"},
+            {"question": "What is dollar-cost averaging?", "options": ["A) Buying stocks at the lowest price", "B) Investing a fixed amount at regular intervals", "C) Converting currency at the best rate", "D) Averaging your portfolio returns"], "correct_index": 1, "explanation": "Dollar-cost averaging means investing a fixed amount regularly, which reduces the impact of market volatility over time.", "concept": "investment strategies"},
         ],
         2: [  # Saving
             {"question": "How many months of expenses should an emergency fund cover?", "options": ["A) 1 month", "B) 3-6 months", "C) 12 months", "D) It doesn't matter"], "correct_index": 1, "explanation": "Financial experts recommend saving 3-6 months of living expenses in an easily accessible emergency fund to cover unexpected costs.", "concept": "emergency fund"},
             {"question": "What is a high-yield savings account?", "options": ["A) A checking account with rewards", "B) A savings account that offers above-average interest rates", "C) A stock brokerage account", "D) A certificate of deposit"], "correct_index": 1, "explanation": "High-yield savings accounts pay significantly more interest than traditional savings accounts while keeping your money accessible.", "concept": "high-yield savings"},
+            {"question": "What does 'pay yourself first' mean?", "options": ["A) Spend on things you enjoy", "B) Save before spending on anything else", "C) Pay off debt first", "D) Invest in yourself"], "correct_index": 1, "explanation": "Pay yourself first means automatically setting aside savings from each paycheck before paying bills or other expenses.", "concept": "saving strategies"},
         ],
         3: [  # Credit
             {"question": "What is a credit utilization ratio?", "options": ["A) Your total debt amount", "B) The percentage of available credit you are using", "C) The number of credit cards you own", "D) Your monthly payment amount"], "correct_index": 1, "explanation": "Credit utilization is the percentage of your total credit limit that you're using. Keeping it below 30% is generally recommended for a healthy credit score.", "concept": "credit utilization"},
             {"question": "Which debt payoff method targets the highest interest rate first?", "options": ["A) Snowball method", "B) Avalanche method", "C) Consolidation", "D) Minimum payment"], "correct_index": 1, "explanation": "The avalanche method prioritises debts with the highest interest rates first, saving you the most money in interest over time.", "concept": "debt payoff strategies"},
+            {"question": "What makes up the largest portion of your FICO score?", "options": ["A) Credit mix", "B) Payment history (35%)", "C) Length of credit history", "D) New credit inquiries"], "correct_index": 1, "explanation": "Payment history accounts for 35% of your FICO score, making it the most important factor to maintain.", "concept": "credit scores"},
         ],
         4: [  # Crypto
             {"question": "What is a private key in crypto?", "options": ["A) Your username", "B) A password to your exchange", "C) A cryptographic key that controls your assets", "D) Your wallet address"], "correct_index": 2, "explanation": "A private key is a cryptographic secret that proves ownership of blockchain assets. Never share it — whoever has it controls your funds.", "concept": "wallet security"},
+            {"question": "What does DYOR stand for?", "options": ["A) Do Your Own Research", "B) Double Your Own Returns", "C) Deposit Your Own Resources", "D) Diversify Your Ongoing Revenue"], "correct_index": 0, "explanation": "DYOR means Do Your Own Research. Always investigate before investing in any cryptocurrency or DeFi project.", "concept": "crypto safety"},
+            {"question": "What is a DEX?", "options": ["A) Digital Exchange Index", "B) Decentralized Exchange", "C) Derivative Exchange", "D) Debit Exchange"], "correct_index": 1, "explanation": "A DEX (Decentralized Exchange) allows peer-to-peer crypto trading directly from your wallet without a central intermediary.", "concept": "DeFi basics"},
         ],
         5: [  # Taxes
             {"question": "What is the difference between a tax deduction and a tax credit?", "options": ["A) They are the same thing", "B) A deduction reduces taxable income; a credit reduces tax owed dollar-for-dollar", "C) A credit reduces income; a deduction reduces tax owed", "D) Neither affects how much you pay"], "correct_index": 1, "explanation": "A tax deduction lowers your taxable income, while a tax credit directly reduces the amount of tax you owe, making credits generally more valuable.", "concept": "deductions vs credits"},
             {"question": "What is a 401(k)?", "options": ["A) A type of bank account", "B) An employer-sponsored retirement savings plan with tax advantages", "C) A government bond", "D) A type of insurance policy"], "correct_index": 1, "explanation": "A 401(k) is a tax-advantaged retirement savings plan offered by employers, often with matching contributions that are essentially free money.", "concept": "tax-advantaged accounts"},
+            {"question": "What is tax-loss harvesting?", "options": ["A) Avoiding taxes illegally", "B) Selling losing investments to offset capital gains", "C) Harvesting crops for tax deductions", "D) Filing taxes early for a discount"], "correct_index": 1, "explanation": "Tax-loss harvesting involves selling investments at a loss to offset capital gains taxes on winning investments.", "concept": "tax optimization"},
         ],
     }
 
@@ -911,6 +1502,9 @@ def _fallback_questions(category: int, difficulty: int, num: int) -> dict[str, A
     selected = (cat_questions * ((num // len(cat_questions)) + 1))[:num]
 
     quest_id = _gen_id()
+    xp_reward = int(50 * DIFFICULTY_XP_MULTIPLIER.get(QuestDifficulty(difficulty), 1.0))
+    token_reward = int(10_000_000 * DIFFICULTY_XP_MULTIPLIER.get(QuestDifficulty(difficulty), 1.0))
+
     quest = {
         "id": quest_id,
         "title": f"{CATEGORY_NAMES.get(LessonCategory(category), 'Finance')} Quiz",
@@ -918,8 +1512,8 @@ def _fallback_questions(category: int, difficulty: int, num: int) -> dict[str, A
         "category": category,
         "category_name": CATEGORY_NAMES.get(LessonCategory(category), "Finance"),
         "difficulty": difficulty,
-        "xp_reward": 50,
-        "token_reward": 10_000_000,
+        "xp_reward": xp_reward,
+        "token_reward": token_reward,
         "required_level": 1,
         "expires_at": None,
         "is_daily": False,
@@ -927,19 +1521,65 @@ def _fallback_questions(category: int, difficulty: int, num: int) -> dict[str, A
         "questions": selected,
         "created_at": _now_iso(),
     }
-    quests[quest_id] = quest
+    _db_create_quest(quest)
 
     return {
         "quest_id": quest_id,
         "questions": [{"question": q["question"], "options": q["options"], "concept": q.get("concept", "")} for q in selected],
-        "xp_reward": 50,
-        "token_reward": 10_000_000,
+        "xp_reward": xp_reward,
+        "token_reward": token_reward,
     }
 
 
 # ══════════════════════════════════════════════
 #  AI NPC interactions
 # ══════════════════════════════════════════════
+
+def _get_npc_fallback_response(npc_id: str, player: dict[str, Any], message: str) -> str:
+    """Return a contextual pre-written response based on the NPC and user message."""
+    responses = NPC_FALLBACK_RESPONSES.get(npc_id, NPC_FALLBACK_RESPONSES["professor_luna"])
+
+    # Try to match keywords to pick a relevant response
+    message_lower = message.lower()
+    keyword_map = {
+        "professor_luna": [
+            (["budget", "50/30/20", "spend", "expense", "money management"], 0),
+            (["save", "saving", "habit", "wealth", "rich", "broke"], 1),
+            (["pay yourself", "first", "automatic", "automate"], 2),
+            (["fun", "enjoy", "restrict", "deprive", "guilt"], 3),
+            (["emergency", "safety", "unexpected", "rainy day"], 4),
+        ],
+        "trader_rex": [
+            (["diversif", "portfolio", "spread", "asset"], 0),
+            (["compound", "interest", "grow", "time", "early", "start"], 1),
+            (["risk", "loss", "lose", "crash", "drop", "bear"], 2),
+            (["dca", "dollar cost", "regular", "consistent"], 3),
+            (["etf", "index", "fund", "beginner", "start invest"], 4),
+        ],
+        "crypto_sage": [
+            (["key", "private", "wallet", "secure", "seed"], 0),
+            (["defi", "dex", "decentralized", "scam", "rug"], 1),
+            (["blockchain", "how", "work", "what is", "explain"], 2),
+            (["gas", "fee", "expensive", "cost", "transaction"], 3),
+            (["nft", "token", "digital", "ownership"], 4),
+        ],
+        "credit_fox": [
+            (["score", "fico", "credit score", "payment", "history"], 0),
+            (["utilization", "limit", "balance", "ratio"], 1),
+            (["debt", "payoff", "avalanche", "snowball", "owe"], 2),
+            (["card", "credit card", "apr", "interest", "reward"], 3),
+            (["build", "improve", "authorized", "mix", "level up"], 4),
+        ],
+    }
+
+    npc_keywords = keyword_map.get(npc_id, [])
+    for keywords, idx in npc_keywords:
+        if any(kw in message_lower for kw in keywords):
+            return responses[idx]
+
+    # Default: pick a random response
+    return random.choice(responses)
+
 
 @app.post("/npc/chat", response_model=NPCChatResponse)
 async def npc_chat(body: NPCChatRequest, wallet: str = Depends(_get_current_wallet)):
@@ -950,13 +1590,9 @@ async def npc_chat(body: NPCChatRequest, wallet: str = Depends(_get_current_wall
         raise HTTPException(status_code=404, detail="NPC not found")
 
     npc = NPC_PERSONAS[body.npc_id]
-    chat_key = f"{wallet}:{body.npc_id}"
 
-    # Retrieve or initialize chat history.
-    if chat_key not in chat_histories:
-        chat_histories[chat_key] = []
-
-    history = chat_histories[chat_key]
+    # Retrieve chat history from DB
+    history = _db_get_chat_history(wallet, body.npc_id, limit=20)
 
     # Build system prompt.
     system_prompt = f"""You are {npc['name']}, a {npc['role']} in Ludex, a play-to-learn financial literacy game.
@@ -983,20 +1619,15 @@ Rules:
 9. If they ask about a concept above their level, give a simplified preview and encourage them to level up.
 10. NEVER give specific financial advice for real investments. Always remind them to do their own research."""
 
-    # Add user message to history.
+    # Save user message to DB
+    _db_save_chat(wallet, body.npc_id, "user", body.message)
+
+    # Add user message to history for AI call
     history.append({"role": "user", "content": body.message})
 
-    # Keep last 20 messages for context.
-    recent_history = history[-20:]
-
     if ai_client is None:
-        # Fallback response.
-        reply = (
-            f"Hey {player['username']}! Great question about that. "
-            f"As your {npc['role']}, I'd love to dive deeper into this topic. "
-            f"Make sure to check out the quests in my specialty area: {npc['specialty']}. "
-            f"Keep that {player['daily_streak']}-day streak going!"
-        )
+        # Fallback response using pre-written content
+        reply = _get_npc_fallback_response(body.npc_id, player, body.message)
         xp_earned = 5
     else:
         try:
@@ -1004,18 +1635,14 @@ Rules:
                 model="claude-sonnet-4-20250514",
                 max_tokens=500,
                 system=system_prompt,
-                messages=recent_history,
+                messages=history,
             )
             reply = response.content[0].text
             xp_earned = _calculate_chat_xp(body.message, reply)
         except Exception as e:
             logger.error("npc_chat_failed", error=str(e))
-            reply = (
-                f"Hmm, my thoughts got a bit scrambled there, {player['username']}. "
-                f"Let me think about that and get back to you. "
-                f"In the meantime, why not try a quest in {npc['specialty']}?"
-            )
-            xp_earned = 2
+            reply = _get_npc_fallback_response(body.npc_id, player, body.message)
+            xp_earned = 5
 
     # Cap daily chat XP at 100.
     today = datetime.now(timezone.utc).date().isoformat()
@@ -1030,8 +1657,9 @@ Rules:
     player["xp"] += xp_earned
     _process_level_ups(player)
 
-    # Save assistant reply.
-    history.append({"role": "assistant", "content": reply})
+    # Save player state and assistant reply
+    _db_update_player(player)
+    _db_save_chat(wallet, body.npc_id, "assistant", reply)
 
     # Suggest relevant actions.
     suggested = _suggest_actions(player, npc)
@@ -1064,7 +1692,7 @@ def _suggest_actions(player: dict, npc: dict) -> list[str]:
         actions.append("Try your first quest to earn XP and LDX tokens!")
     if player["daily_streak"] == 0:
         actions.append("Complete a quest today to start a learning streak!")
-    if len(player["friends"]) == 0:
+    if len(player.get("friends", [])) == 0:
         actions.append("Add friends to compete on the leaderboard!")
     if player["staking"] is None and player["level"] >= 5:
         actions.append("Stake LDX to unlock premium courses and earn bonus rewards!")
@@ -1115,24 +1743,33 @@ async def list_npcs():
 
 @app.get("/leaderboard", response_model=LeaderboardResponse)
 async def get_leaderboard():
-    entries = _build_leaderboard()
+    cached = leaderboard_cache.get("lb")
+    if cached is not None:
+        entries = cached
+    else:
+        entries = _build_leaderboard()
+        leaderboard_cache["lb"] = entries
     return LeaderboardResponse(season=1, entries=entries, updated_at=_now_iso())
 
 
 @app.get("/leaderboard/teams")
 async def get_team_leaderboard():
-    sorted_teams = sorted(teams.values(), key=lambda t: t["total_xp"], reverse=True)
+    conn = _get_db()
+    rows = conn.execute("SELECT * FROM teams ORDER BY total_xp DESC LIMIT 50").fetchall()
+    result = []
+    for i, row in enumerate(rows):
+        t = dict(row)
+        member_count = conn.execute("SELECT COUNT(*) as c FROM team_members WHERE team_id = ?", (t["id"],)).fetchone()["c"]
+        result.append({
+            "rank": i + 1,
+            "id": t["id"],
+            "name": t["name"],
+            "total_xp": t["total_xp"],
+            "member_count": member_count,
+        })
+    conn.close()
     return {
-        "teams": [
-            {
-                "rank": i + 1,
-                "id": t["id"],
-                "name": t["name"],
-                "total_xp": t["total_xp"],
-                "member_count": len(t["members"]),
-            }
-            for i, t in enumerate(sorted_teams[:50])
-        ],
+        "teams": result,
         "updated_at": _now_iso(),
     }
 
@@ -1159,6 +1796,7 @@ async def stake_tokens(body: StakeRequest, wallet: str = Depends(_get_current_wa
         "bonus_multiplier": multiplier,
     }
 
+    _db_update_player(player)
     _check_badge_eligibility(player)
     _track_event("staked", {"wallet": wallet, "amount": body.amount, "days": body.duration_days})
 
@@ -1189,6 +1827,7 @@ async def unstake_tokens(wallet: str = Depends(_get_current_wallet)):
     amount = player["staking"]["amount"]
     reward = int(amount * 0.05)
     player["staking"] = None
+    _db_update_player(player)
 
     return {
         "status": "unstaked",
@@ -1206,20 +1845,26 @@ async def unstake_tokens(wallet: str = Depends(_get_current_wallet)):
 @app.post("/social/friends")
 async def add_friend(body: FriendRequest, wallet: str = Depends(_get_current_wallet)):
     player = _get_player_or_404(wallet)
-    _get_player_or_404(body.friend_address)  # ensure friend exists
+    friend = _get_player_or_404(body.friend_address)  # ensure friend exists
 
-    if body.friend_address in player["friends"]:
+    if body.friend_address in player.get("friends", []):
         raise HTTPException(status_code=409, detail="Already friends")
 
     if body.friend_address == wallet:
         raise HTTPException(status_code=400, detail="Cannot add yourself as a friend")
 
-    player["friends"].append(body.friend_address)
+    # Add friend to player
+    friends = player.get("friends", [])
+    friends.append(body.friend_address)
+    player["friends"] = friends
+    _db_update_player(player)
 
-    # Reciprocal friendship.
-    friend = players[body.friend_address]
-    if wallet not in friend["friends"]:
-        friend["friends"].append(wallet)
+    # Reciprocal friendship
+    friend_friends = friend.get("friends", [])
+    if wallet not in friend_friends:
+        friend_friends.append(wallet)
+        friend["friends"] = friend_friends
+        _db_update_player(friend)
 
     _check_badge_eligibility(player)
 
@@ -1230,9 +1875,9 @@ async def add_friend(body: FriendRequest, wallet: str = Depends(_get_current_wal
 async def list_friends(wallet: str = Depends(_get_current_wallet)):
     player = _get_player_or_404(wallet)
     friends_data = []
-    for f_addr in player["friends"]:
-        if f_addr in players:
-            f = players[f_addr]
+    for f_addr in player.get("friends", []):
+        f = _db_get_player(f_addr)
+        if f:
             friends_data.append({
                 "wallet_address": f_addr,
                 "username": f["username"],
@@ -1245,19 +1890,14 @@ async def list_friends(wallet: str = Depends(_get_current_wallet)):
 @app.post("/teams", response_model=TeamResponse, status_code=201)
 async def create_team(body: TeamCreate, wallet: str = Depends(_get_current_wallet)):
     player = _get_player_or_404(wallet)
-    if player["team_id"] is not None:
+    if player.get("team_id") is not None:
         raise HTTPException(status_code=409, detail="Already in a team. Leave first.")
 
     team_id = _gen_id()
-    team = {
-        "id": team_id,
-        "name": body.name,
-        "leader": wallet,
-        "members": [wallet],
-        "total_xp": player["xp"],
-    }
-    teams[team_id] = team
+    team = _db_create_team(team_id, body.name, wallet, player["xp"])
+
     player["team_id"] = team_id
+    _db_update_player(player)
 
     return TeamResponse(**team)
 
@@ -1265,65 +1905,66 @@ async def create_team(body: TeamCreate, wallet: str = Depends(_get_current_walle
 @app.post("/teams/{team_id}/join")
 async def join_team(team_id: str, wallet: str = Depends(_get_current_wallet)):
     player = _get_player_or_404(wallet)
-    if player["team_id"] is not None:
+    if player.get("team_id") is not None:
         raise HTTPException(status_code=409, detail="Already in a team")
 
-    if team_id not in teams:
+    team = _db_get_team(team_id)
+    if team is None:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = teams[team_id]
     if len(team["members"]) >= 5:
         raise HTTPException(status_code=409, detail="Team is full (max 5)")
 
-    team["members"].append(wallet)
-    team["total_xp"] += player["xp"]
-    player["team_id"] = team_id
+    conn = _get_db()
+    conn.execute("INSERT INTO team_members (team_id, wallet_address, joined_at) VALUES (?, ?, ?)", (team_id, wallet, _now_iso()))
+    conn.execute("UPDATE teams SET total_xp = total_xp + ? WHERE id = ?", (player["xp"], team_id))
+    conn.commit()
+    conn.close()
 
+    player["team_id"] = team_id
+    _db_update_player(player)
+
+    team = _db_get_team(team_id)
     return {"status": "joined", "team": team}
 
 
 @app.get("/teams/{team_id}", response_model=TeamResponse)
 async def get_team(team_id: str):
-    if team_id not in teams:
+    team = _db_get_team(team_id)
+    if team is None:
         raise HTTPException(status_code=404, detail="Team not found")
-    return TeamResponse(**teams[team_id])
+    return TeamResponse(**team)
 
 
 # ══════════════════════════════════════════════
 #  Player analytics
 # ══════════════════════════════════════════════
 
-def _track_event(event_type: str, data: dict[str, Any]) -> None:
-    analytics_events.append({
-        "type": event_type,
-        "data": data,
-        "timestamp": _now_iso(),
-    })
-
-
 @app.get("/analytics/overview", response_model=AnalyticsResponse)
 async def get_analytics():
     now = time.time()
-    active_24h = sum(1 for p in players.values() if now - p.get("last_activity_ts", 0) < 86400)
-    avg_level = sum(p["level"] for p in players.values()) / max(len(players), 1)
+    all_players = _db_list_all_players()
+
+    active_24h = sum(1 for p in all_players if now - p.get("last_activity_ts", 0) < 86400)
+    avg_level = sum(p["level"] for p in all_players) / max(len(all_players), 1)
 
     # Most popular category.
     cat_counts: dict[str, int] = {}
-    for p in players.values():
+    for p in all_players:
         for cat_key, count in p["lesson_progress"].items():
             cat_counts[cat_key] = cat_counts.get(cat_key, 0) + count
     top_cat_key = max(cat_counts, key=cat_counts.get, default="0") if cat_counts else "0"
     top_cat = CATEGORY_NAMES.get(LessonCategory(int(top_cat_key)), "Budgeting")
 
     # 7-day retention (players active in last 7 days / total).
-    active_7d = sum(1 for p in players.values() if now - p.get("last_activity_ts", 0) < 604800)
-    retention = active_7d / max(len(players), 1)
+    active_7d = sum(1 for p in all_players if now - p.get("last_activity_ts", 0) < 604800)
+    retention = active_7d / max(len(all_players), 1)
 
-    total_quests = sum(p["total_quests_completed"] for p in players.values())
+    total_quests = sum(p["total_quests_completed"] for p in all_players)
     total_tokens = total_quests * 10_000_000  # approximate
 
     return AnalyticsResponse(
-        total_players=len(players),
+        total_players=len(all_players),
         total_quests_completed=total_quests,
         total_tokens_distributed=total_tokens,
         active_players_24h=active_24h,
@@ -1345,7 +1986,7 @@ async def get_player_analytics(wallet: str):
 
     # XP sources estimate.
     quest_xp = player["total_quests_completed"] * 50  # avg
-    chat_xp = player["chat_xp_today"]
+    chat_xp = player.get("chat_xp_today", 0)
 
     return {
         "wallet": wallet,
@@ -1354,10 +1995,10 @@ async def get_player_analytics(wallet: str):
         "total_xp_earned": player["xp"] + sum(_xp_for_level(l) for l in range(1, player["level"])),
         "quests_completed": player["total_quests_completed"],
         "category_breakdown": category_breakdown,
-        "badges_earned": len(player["badges"]),
+        "badges_earned": len(player.get("badges", [])),
         "current_streak": player["daily_streak"],
         "longest_streak": player["longest_streak"],
-        "friends_count": len(player["friends"]),
+        "friends_count": len(player.get("friends", [])),
         "staking_active": player["staking"] is not None,
         "xp_sources": {"quests": quest_xp, "chat": chat_xp},
         "member_since": player["registered_at"],
@@ -1372,7 +2013,7 @@ async def get_player_analytics(wallet: str):
 async def get_curriculum(wallet: str | None = None):
     """Return the full curriculum tree with unlock status."""
     result = {}
-    player = players.get(wallet) if wallet else None
+    player = _db_get_player(wallet) if wallet else None
 
     for cat in LessonCategory:
         lessons = CURRICULUM.get(cat, [])

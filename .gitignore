@@ -1,0 +1,3 @@
+src/backend/.env
+src/backend/ludex.db*
+.DS_Store
