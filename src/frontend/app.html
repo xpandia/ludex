@@ -116,6 +116,106 @@ a{color:var(--cyan);text-decoration:none}
 #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997}
 
 /* ═══════════════════════════════════════════
+   GAME FEEL ENHANCEMENTS
+   ═══════════════════════════════════════════ */
+
+/* Quiz slide transitions */
+.quiz-slide-out{animation:quizSlideOut .35s ease forwards}
+.quiz-slide-in{animation:quizSlideIn .35s ease forwards}
+@keyframes quizSlideOut{to{opacity:0;transform:translateX(-60px)}}
+@keyframes quizSlideIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+
+/* Correct answer particles */
+.quiz-opt.correct{position:relative;overflow:visible}
+.answer-particles{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.answer-particle{position:absolute;width:6px;height:6px;border-radius:50%;animation:particleBurst .7s ease forwards}
+@keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}}
+
+/* Card joy shake (correct) */
+.card-joy{animation:cardJoy .5s var(--spring)}
+@keyframes cardJoy{0%,100%{transform:rotate(0)}15%{transform:rotate(1.5deg) scale(1.01)}30%{transform:rotate(-1deg)}45%{transform:rotate(0.5deg)}60%{transform:rotate(0)}}
+
+/* Card buzz shake (wrong) */
+.card-buzz{animation:cardBuzz .45s ease}
+@keyframes cardBuzz{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}20%{transform:translateX(8px)}30%{transform:translateX(-6px)}40%{transform:translateX(6px)}50%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+
+/* XP popup that floats from answer */
+.xp-answer-float{position:absolute;right:16px;top:-10px;font-family:var(--font-display);font-weight:800;
+  font-size:20px;color:var(--green);pointer-events:none;white-space:nowrap;
+  text-shadow:0 0 12px rgba(16,185,129,.5);animation:xpAnswerUp 1.2s ease forwards;z-index:10}
+@keyframes xpAnswerUp{0%{opacity:1;transform:translateY(0) scale(.8)}30%{transform:translateY(-15px) scale(1.1)}100%{opacity:0;transform:translateY(-50px) scale(1)}}
+
+/* Big XP counter overlay */
+.xp-counter-overlay{position:fixed;inset:0;z-index:9996;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none}
+.xp-counter-number{font-family:var(--font-display);font-size:72px;font-weight:900;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(0 0 30px var(--cyan-glow))}
+.xp-counter-label{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text-secondary);
+  margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+#xp-counter-particles{position:absolute;inset:0;pointer-events:none}
+
+/* Level up full-screen flash */
+.levelup-flash{position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:radial-gradient(circle,rgba(139,92,246,.4),transparent 70%);
+  animation:lvlFlash .8s ease forwards}
+@keyframes lvlFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+.levelup-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;
+  pointer-events:none;font-family:var(--font-display);font-size:52px;font-weight:900;color:#fff;
+  text-shadow:0 0 40px var(--purple),0 0 80px var(--cyan);
+  animation:lvlTextPop .9s var(--spring) forwards;white-space:nowrap}
+@keyframes lvlTextPop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.3) rotate(-5deg)}
+  40%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(2deg)}
+  70%{transform:translate(-50%,-50%) scale(0.95) rotate(0)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.1) translateY(-30px)}}
+
+/* Badge earned popup */
+.badge-popup{position:fixed;top:-100px;left:50%;transform:translateX(-50%);z-index:9998;
+  background:var(--bg-card);border:1px solid var(--purple);border-radius:var(--radius);
+  padding:16px 24px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 12px 50px rgba(139,92,246,.3);min-width:280px;
+  animation:badgeSlideIn .5s var(--spring) forwards}
+.badge-popup.dismiss{animation:badgeSlideOut .4s ease forwards}
+@keyframes badgeSlideIn{to{top:24px}}
+@keyframes badgeSlideOut{from{top:24px;opacity:1}to{top:-100px;opacity:0}}
+.badge-popup-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:28px;background:linear-gradient(135deg,var(--purple),var(--cyan));
+  box-shadow:0 0 20px var(--purple-glow);animation:badgeShine 2s ease infinite}
+@keyframes badgeShine{0%,100%{box-shadow:0 0 20px var(--purple-glow)}50%{box-shadow:0 0 40px rgba(139,92,246,.5),0 0 60px rgba(6,182,212,.2)}}
+.badge-popup-info{flex:1}
+.badge-popup-title{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text-primary)}
+.badge-popup-desc{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.badge-popup-label{font-size:10px;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+/* Streak fire CSS enhancement */
+.streak-fire{position:relative;display:inline-block}
+.streak-fire::before{content:'';position:absolute;inset:-8px;border-radius:50%;
+  background:radial-gradient(circle,rgba(249,115,22,.3),transparent 70%);
+  animation:fireGlow 1.2s ease infinite alternate;pointer-events:none}
+@keyframes fireGlow{0%{transform:scale(0.9);opacity:.5}100%{transform:scale(1.3);opacity:.9}}
+.streak-fire.fire-surge{animation:fireSurge .6s var(--spring)}
+@keyframes fireSurge{0%{transform:scale(1)}30%{transform:scale(1.6) rotate(10deg)}60%{transform:scale(1.1) rotate(-5deg)}100%{transform:scale(1.2) rotate(3deg)}}
+
+/* Spark particles for streak */
+.fire-spark{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--yellow);
+  pointer-events:none;animation:sparkFly .6s ease forwards}
+@keyframes sparkFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
+
+/* Button ripple effect */
+.btn{position:relative;overflow:hidden}
+.btn-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.25);
+  transform:scale(0);animation:rippleOut .6s ease forwards;pointer-events:none}
+@keyframes rippleOut{to{transform:scale(4);opacity:0}}
+
+/* Avatar pulse on XP earned */
+.avatar-xp-pulse{animation:avatarPulse .6s var(--spring)}
+@keyframes avatarPulse{0%{box-shadow:0 0 0 0 rgba(6,182,212,.6)}50%{box-shadow:0 0 0 12px rgba(6,182,212,0)}100%{box-shadow:0 0 0 0 transparent}}
+
+/* Screen shake for impact */
+.screen-shake{animation:screenShake .3s ease}
+@keyframes screenShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-2px)}80%{transform:translateX(1px)}}
+
+/* ═══════════════════════════════════════════
    APP LAYOUT — Desktop Sidebar + Mobile Tabs
    ═══════════════════════════════════════════ */
 #app{display:none;min-height:100dvh}
@@ -1781,12 +1881,70 @@ function selectAnswer(idx) {
   if (opts[0].classList.contains('correct') || opts[0].classList.contains('wrong')) return;
 
   currentQuiz.answers[currentQuiz.currentQ] = idx;
-  opts.forEach((o, i) => {
-    o.classList.remove('selected');
-    if (i === idx) o.classList.add('selected');
-  });
-  opts.forEach(o => o.classList.add('selected-final'));
-  document.getElementById('quiz-nav').style.display = 'flex';
+  const q = currentQuiz.questions[currentQuiz.currentQ];
+  const correctIdx = q.correct_answer;
+  const isCorrect = idx === correctIdx;
+  const quizQuestion = document.querySelector('.quiz-question');
+  const modal = document.querySelector('.modal');
+
+  // Disable all options immediately
+  opts.forEach(o => { o.style.pointerEvents = 'none'; });
+
+  if (isCorrect) {
+    // CORRECT: green flash + particles + card joy + XP float
+    opts[idx].classList.add('correct');
+    if (modal) modal.classList.add('card-joy');
+    setTimeout(() => modal && modal.classList.remove('card-joy'), 500);
+    spawnAnswerParticles(opts[idx]);
+    // Float +150 XP from the button
+    const xpEl = document.createElement('div');
+    xpEl.className = 'xp-answer-float';
+    xpEl.textContent = '+150 XP';
+    opts[idx].style.position = 'relative';
+    opts[idx].appendChild(xpEl);
+    setTimeout(() => xpEl.remove(), 1200);
+    // Pulse avatar
+    const avatar = document.querySelector('.avatar');
+    if (avatar) { avatar.classList.add('avatar-xp-pulse'); setTimeout(() => avatar.classList.remove('avatar-xp-pulse'), 600); }
+  } else {
+    // WRONG: red flash + buzz shake + reveal correct
+    opts[idx].classList.add('wrong');
+    if (modal) modal.classList.add('card-buzz');
+    setTimeout(() => modal && modal.classList.remove('card-buzz'), 450);
+    // Screen shake
+    document.body.classList.add('screen-shake');
+    setTimeout(() => document.body.classList.remove('screen-shake'), 300);
+    // Reveal correct answer
+    if (correctIdx !== undefined && opts[correctIdx]) {
+      opts[correctIdx].classList.add('reveal-correct');
+    }
+    // Show explanation if available
+    if (q.explanation) {
+      const explEl = document.getElementById('quiz-explanation');
+      if (explEl) {
+        explEl.innerHTML = `<div class="quiz-explanation">\u2705 ${q.options[correctIdx]}<br><span style="color:var(--text-muted);font-size:12px;margin-top:6px;display:block">${q.explanation}</span></div>`;
+        explEl.style.display = 'block';
+      }
+    }
+  }
+
+  // 1-second delay before showing Next button
+  setTimeout(() => {
+    document.getElementById('quiz-nav').style.display = 'flex';
+  }, 1000);
+}
+
+function spawnAnswerParticles(btn) {
+  const colors = ['#10b981','#06b6d4','#eab308','#8b5cf6','#fff'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'answer-particle';
+    const angle = (Math.PI * 2 * i) / 12;
+    const dist = 40 + Math.random() * 40;
+    p.style.cssText = `left:50%;top:50%;background:${colors[i % colors.length]};--px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px`;
+    btn.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
 }
 
 function nextQuestion() {
@@ -1794,8 +1952,20 @@ function nextQuestion() {
   if (currentQuiz.currentQ + 1 >= currentQuiz.questions.length) {
     submitQuiz();
   } else {
-    currentQuiz.currentQ++;
-    renderQuizQuestion();
+    // Slide out current question, then slide in next
+    const questionEl = document.querySelector('.quiz-question');
+    if (questionEl) {
+      questionEl.classList.add('quiz-slide-out');
+      setTimeout(() => {
+        currentQuiz.currentQ++;
+        renderQuizQuestion();
+        const newQ = document.querySelector('.quiz-question');
+        if (newQ) newQ.classList.add('quiz-slide-in');
+      }, 350);
+    } else {
+      currentQuiz.currentQ++;
+      renderQuizQuestion();
+    }
   }
 }
 
@@ -1818,6 +1988,10 @@ async function submitQuiz() {
       fireConfetti();
       toast('success', t('quest_completed'), `+${result.xp_earned} ${t('xp_earned')}`);
       floatXP(result.xp_earned);
+      // Big XP counter animation overlay
+      animateXPCounter(result.xp_earned);
+      // Streak fire surge
+      triggerStreakSurge();
     }
 
     content.innerHTML = `<div class="modal-handle"></div>
@@ -1828,7 +2002,7 @@ async function submitQuiz() {
         ${result.passed ? `
         <div class="quiz-result-rewards">
           <div class="quiz-result-reward xp-anim">
-            <div class="quiz-result-reward-val" style="color:var(--cyan)">+${result.xp_earned}</div>
+            <div class="quiz-result-reward-val" style="color:var(--cyan)" id="xp-reward-counter">+0</div>
             <div class="quiz-result-reward-label">${t('xp_earned')}</div>
           </div>
           <div class="quiz-result-reward xp-anim" style="animation-delay:.2s">
@@ -1836,12 +2010,26 @@ async function submitQuiz() {
             <div class="quiz-result-reward-label">LDX Tokens</div>
           </div>
         </div>
-        ${result.new_levels && result.new_levels.length ? `<div class="level-up-banner">&#11088; LEVEL UP! Lv. ${result.new_levels[result.new_levels.length - 1]}</div>` : ''}
+        ${result.new_levels && result.new_levels.length ? `<div class="level-up-banner" id="levelup-banner">&#11088; LEVEL UP! Lv. ${result.new_levels[result.new_levels.length - 1]}</div>` : ''}
         ${result.badges_earned && result.badges_earned.length ? '<div style="margin:12px 0">' + result.badges_earned.map(b => `<div class="pill pill-cyan" style="margin:4px;font-size:13px;padding:6px 14px">&#127941; ${b.name}</div>`).join('') + '</div>' : ''}
         ` : `<p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px">${result.message}</p>`}
         <div style="margin-top:8px;color:var(--text-secondary);font-size:14px">&#128293; ${t('streak')}: ${result.daily_streak || 0} ${t('days')}</div>
         <button class="btn btn-primary btn-block btn-lg" style="margin-top:24px" onclick="closeModal();loadPlayerData();loadQuests()">${t('continue')}</button>
       </div>`;
+
+    // Animate the XP counter in the result card
+    if (result.passed) {
+      const counterEl = document.getElementById('xp-reward-counter');
+      if (counterEl) animateCounterElement(counterEl, result.xp_earned, 1200);
+      // Level up flash effect
+      if (result.new_levels && result.new_levels.length) {
+        setTimeout(() => triggerLevelUpFlash(result.new_levels[result.new_levels.length - 1]), 600);
+      }
+      // Badge earned popup
+      if (result.badges_earned && result.badges_earned.length) {
+        result.badges_earned.forEach((b, i) => setTimeout(() => showBadgePopup(b), 1000 + i * 1500));
+      }
+    }
   } catch (e) {
     content.innerHTML = `<div class="modal-handle"></div>
       <div style="text-align:center;padding:40px 0">
@@ -2325,44 +2513,52 @@ function fireConfetti() {
   canvas.height = window.innerHeight;
 
   const pieces = [];
-  const colors = ['#8b5cf6','#06b6d4','#f97316','#10b981','#eab308','#ec4899','#ef4444'];
-  for (let i = 0; i < 150; i++) {
+  const colors = ['#8b5cf6','#06b6d4','#f97316','#10b981','#eab308','#ec4899','#ef4444','#fbbf24','#fff'];
+  // Burst from center-top for dramatic effect
+  const cx = canvas.width / 2;
+  for (let i = 0; i < 180; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 8;
     pieces.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * -canvas.height,
+      x: cx + (Math.random() - 0.5) * 200,
+      y: canvas.height * 0.3 + (Math.random() - 0.5) * 100,
       w: Math.random() * 10 + 4,
       h: Math.random() * 6 + 3,
       color: colors[Math.floor(Math.random() * colors.length)],
-      vx: (Math.random() - 0.5) * 6,
-      vy: Math.random() * 4 + 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
       rot: Math.random() * 360,
-      rotSpeed: (Math.random() - 0.5) * 12,
+      rotSpeed: (Math.random() - 0.5) * 15,
       opacity: 1,
+      wind: (Math.random() - 0.3) * 0.15, // wind drift
+      gravity: 0.06 + Math.random() * 0.04,
     });
   }
 
   let frame = 0;
+  const maxFrames = 180; // ~3 seconds at 60fps
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let alive = false;
     pieces.forEach(p => {
       if (p.opacity <= 0) return;
       alive = true;
-      p.x += p.vx;
+      p.x += p.vx + p.wind;
       p.y += p.vy;
-      p.vy += 0.05;
+      p.vy += p.gravity;
+      p.vx *= 0.99; // air resistance
       p.rot += p.rotSpeed;
-      if (frame > 60) p.opacity -= 0.012;
+      if (frame > 90) p.opacity -= 0.018;
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot * Math.PI / 180);
-      ctx.globalAlpha = p.opacity;
+      ctx.globalAlpha = Math.max(0, p.opacity);
       ctx.fillStyle = p.color;
       ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
       ctx.restore();
     });
     frame++;
-    if (alive && frame < 200) requestAnimationFrame(animate);
+    if (alive && frame < maxFrames) requestAnimationFrame(animate);
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   animate();
@@ -2834,6 +3030,147 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('#lang-selector')) {
     document.getElementById('lang-dropdown').classList.remove('open');
   }
+});
+
+// ═══════════════════════════════════════════
+//  GAME FEEL — Animations & Effects
+// ═══════════════════════════════════════════
+
+// Big XP counter overlay with golden particles
+function animateXPCounter(amount) {
+  const overlay = document.createElement('div');
+  overlay.className = 'xp-counter-overlay';
+  overlay.innerHTML = `<canvas id="xp-counter-particles" width="${window.innerWidth}" height="${window.innerHeight}"></canvas>
+    <div class="xp-counter-number" id="xp-big-counter">0</div>
+    <div class="xp-counter-label">XP EARNED</div>`;
+  document.body.appendChild(overlay);
+
+  // Animate number counting
+  const numEl = overlay.querySelector('#xp-big-counter');
+  const duration = 1500;
+  const start = performance.now();
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    numEl.textContent = '+' + Math.round(amount * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Golden particles on the canvas
+  const canvas = overlay.querySelector('#xp-counter-particles');
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const goldColors = ['#eab308','#f59e0b','#fbbf24','#fcd34d','#fff'];
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3;
+    particles.push({ x: canvas.width/2, y: canvas.height/2, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+      size: 2 + Math.random()*4, color: goldColors[Math.floor(Math.random()*goldColors.length)], life: 1 });
+  }
+  let frame = 0;
+  function animP() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.life <= 0) return;
+      alive = true;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.life -= 0.012;
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    });
+    frame++;
+    if (alive && frame < 120) requestAnimationFrame(animP);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  requestAnimationFrame(animP);
+
+  // Fade out and remove
+  setTimeout(() => { overlay.style.transition = 'opacity .5s'; overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 500); }, 2200);
+}
+
+// Animate a counter element from 0 to target
+function animateCounterElement(el, target, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = '+' + Math.round(target * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// Level up full-screen flash
+function triggerLevelUpFlash(level) {
+  const flash = document.createElement('div');
+  flash.className = 'levelup-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 800);
+
+  const text = document.createElement('div');
+  text.className = 'levelup-text';
+  text.innerHTML = `\u2B50 LEVEL UP! Lv.${level}`;
+  document.body.appendChild(text);
+  setTimeout(() => text.remove(), 1200);
+
+  // Screen shake
+  document.body.classList.add('screen-shake');
+  setTimeout(() => document.body.classList.remove('screen-shake'), 300);
+
+  // Extra confetti burst
+  fireConfetti();
+}
+
+// Badge earned slide-in popup
+function showBadgePopup(badge) {
+  const popup = document.createElement('div');
+  popup.className = 'badge-popup';
+  popup.innerHTML = `<div class="badge-popup-icon">${badge.icon || '\uD83C\uDFC5'}</div>
+    <div class="badge-popup-info">
+      <div class="badge-popup-label">Badge Earned!</div>
+      <div class="badge-popup-title">${badge.name}</div>
+      <div class="badge-popup-desc">${badge.description || ''}</div>
+    </div>`;
+  document.body.appendChild(popup);
+  setTimeout(() => { popup.classList.add('dismiss'); setTimeout(() => popup.remove(), 400); }, 4000);
+}
+
+// Streak fire surge effect
+function triggerStreakSurge() {
+  const fires = document.querySelectorAll('.streak-fire');
+  fires.forEach(fire => {
+    fire.classList.add('fire-surge');
+    // Spawn sparks
+    for (let i = 0; i < 6; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'fire-spark';
+      const sx = (Math.random() - 0.5) * 50;
+      const sy = -(20 + Math.random() * 40);
+      spark.style.cssText = `left:50%;top:50%;--sx:${sx}px;--sy:${sy}px;animation-delay:${i*0.05}s`;
+      fire.style.position = 'relative';
+      fire.appendChild(spark);
+      setTimeout(() => spark.remove(), 700);
+    }
+    setTimeout(() => fire.classList.remove('fire-surge'), 600);
+  });
+}
+
+// Button ripple effect — global
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
 });
 
 // ═══════════════════════════════════════════
