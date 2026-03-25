@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -408,7 +408,7 @@ a{color:var(--cyan);text-decoration:none}
 .quest-card:hover{border-color:rgba(139,92,246,.3);transform:translateY(-3px) scale(1.01);
   box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .quest-card.completed{opacity:.7}
-.quest-card.completed::after{content:'COMPLETADA';position:absolute;top:12px;right:12px;
+.quest-card.completed::after{content:'COMPLETED';position:absolute;top:12px;right:12px;
   font-size:10px;font-weight:700;background:var(--green);color:#fff;padding:3px 8px;
   border-radius:var(--radius-xs);letter-spacing:.5px}
 .quest-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
@@ -763,9 +763,39 @@ a{color:var(--cyan);text-decoration:none}
 @media(min-width:1024px){
   .quest-grid{grid-template-columns:repeat(3,1fr)}
 }
+
+/* ═══════════════════════════════════════════
+   Language Selector
+   ═══════════════════════════════════════════ */
+.lang-selector{position:fixed;top:12px;right:12px;z-index:9999}
+.lang-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-pill);
+  background:var(--bg-card);border:1px solid var(--border);font-size:13px;color:var(--text-primary);
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(12px)}
+.lang-btn:hover{border-color:var(--purple);background:var(--purple-dim)}
+.lang-dropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);
+  border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;min-width:160px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);backdrop-filter:blur(20px)}
+.lang-dropdown.open{display:block}
+.lang-option{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:13px;
+  color:var(--text-secondary);cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.lang-option:hover{background:var(--purple-dim);color:var(--text-primary)}
+.lang-option.active{color:var(--purple);font-weight:600}
+@media(min-width:769px){
+  .lang-selector{top:14px;right:24px;z-index:95}
+}
 </style>
 </head>
 <body>
+
+<!-- Language Selector -->
+<div class="lang-selector" id="lang-selector">
+  <button class="lang-btn" onclick="toggleLangDropdown()">&#127760; <span id="lang-current">English</span> &#9662;</button>
+  <div class="lang-dropdown" id="lang-dropdown">
+    <button class="lang-option active" data-lang="en" onclick="setLanguage('en')">&#127468;&#127463; English</button>
+    <button class="lang-option" data-lang="es" onclick="setLanguage('es')">&#127466;&#127480; Espa&ntilde;ol</button>
+    <button class="lang-option" data-lang="zh" onclick="setLanguage('zh')">&#127469;&#127472; &#20013;&#25991;</button>
+  </div>
+</div>
 
 <!-- Toast Container -->
 <div id="toast-container"></div>
@@ -779,36 +809,36 @@ a{color:var(--cyan);text-decoration:none}
 <div id="auth-screen">
   <div class="auth-particles" id="auth-particles"></div>
   <div class="auth-logo">LUDEX</div>
-  <p class="auth-sub">Tu aventura financiera comienza aqui. Aprende, juega y gana tokens reales.</p>
+  <p class="auth-sub" data-i18n="auth_sub">Your financial adventure starts here. Learn, play, and earn real tokens.</p>
   <div class="auth-form" id="register-form">
     <div class="auth-input-wrap">
       <span class="prefix">0x</span>
-      <input type="text" id="reg-wallet" class="has-prefix" placeholder="Tu wallet address" autocomplete="off">
+      <input type="text" id="reg-wallet" class="has-prefix" data-i18n-placeholder="placeholder_wallet" placeholder="Your wallet address" autocomplete="off">
     </div>
     <div class="auth-input-wrap">
-      <input type="text" id="reg-username" placeholder="Nombre de usuario" maxlength="24" autocomplete="off" oninput="updateCharCount(this)">
+      <input type="text" id="reg-username" data-i18n-placeholder="placeholder_username" placeholder="Username" maxlength="24" autocomplete="off" oninput="updateCharCount(this)">
       <span class="auth-char-count" id="reg-char-count">0/24</span>
     </div>
-    <button class="btn btn-primary btn-block btn-lg btn-glow" id="reg-btn" onclick="handleRegister()">Crear Cuenta</button>
+    <button class="btn btn-primary btn-block btn-lg btn-glow" id="reg-btn" onclick="handleRegister()" data-i18n="create_account">Create Account</button>
     <div class="auth-error" id="reg-error"></div>
-    <p class="auth-switch">Ya tengo cuenta <span onclick="showLogin()">Iniciar Sesion</span></p>
+    <p class="auth-switch" data-i18n-html="have_account">Already have an account <span onclick="showLogin()">Sign In</span></p>
   </div>
   <div class="auth-form" id="login-form" style="display:none">
     <div class="auth-input-wrap">
       <span class="prefix">0x</span>
-      <input type="text" id="login-wallet" class="has-prefix" placeholder="Tu wallet address" autocomplete="off">
+      <input type="text" id="login-wallet" class="has-prefix" data-i18n-placeholder="placeholder_wallet" placeholder="Your wallet address" autocomplete="off">
     </div>
     <div class="auth-input-wrap">
-      <input type="text" id="login-username" placeholder="Nombre de usuario" maxlength="24" autocomplete="off">
+      <input type="text" id="login-username" data-i18n-placeholder="placeholder_username" placeholder="Username" maxlength="24" autocomplete="off">
     </div>
-    <button class="btn btn-primary btn-block btn-lg" id="login-btn" onclick="handleLogin()">Iniciar Sesion</button>
+    <button class="btn btn-primary btn-block btn-lg" id="login-btn" onclick="handleLogin()" data-i18n="sign_in">Sign In</button>
     <div class="auth-error" id="login-error"></div>
-    <p class="auth-switch">No tengo cuenta <span onclick="showRegister()">Crear Cuenta</span></p>
+    <p class="auth-switch" data-i18n-html="no_account">Don't have an account <span onclick="showRegister()">Create Account</span></p>
   </div>
   <div class="auth-features">
-    <div class="auth-feature"><div class="auth-feature-icon">&#9889;</div><div class="auth-feature-text">Gana XP</div></div>
-    <div class="auth-feature"><div class="auth-feature-icon">&#127872;</div><div class="auth-feature-text">Tokens LDX</div></div>
-    <div class="auth-feature"><div class="auth-feature-icon">&#127941;</div><div class="auth-feature-text">Insignias</div></div>
+    <div class="auth-feature"><div class="auth-feature-icon">&#9889;</div><div class="auth-feature-text" data-i18n="earn_xp">Earn XP</div></div>
+    <div class="auth-feature"><div class="auth-feature-icon">&#127872;</div><div class="auth-feature-text">LDX Tokens</div></div>
+    <div class="auth-feature"><div class="auth-feature-icon">&#127941;</div><div class="auth-feature-text" data-i18n="badges">Badges</div></div>
     <div class="auth-feature"><div class="auth-feature-icon">&#128640;</div><div class="auth-feature-text">GameFi</div></div>
   </div>
 </div>
@@ -841,28 +871,28 @@ a{color:var(--cyan);text-decoration:none}
   <nav class="sidebar">
     <div class="sidebar-nav">
       <div class="sidebar-item active" onclick="switchTab('home')" data-tab="home">
-        <span class="sidebar-item-icon">&#127968;</span> Inicio
+        <span class="sidebar-item-icon">&#127968;</span> <span data-i18n="nav_home">Home</span>
       </div>
       <div class="sidebar-item" onclick="switchTab('quests')" data-tab="quests">
         <span class="sidebar-item-icon">&#127919;</span> Quests
       </div>
       <div class="sidebar-item" onclick="switchTab('npcs')" data-tab="npcs">
-        <span class="sidebar-item-icon">&#128172;</span> Mentores
+        <span class="sidebar-item-icon">&#128172;</span> <span data-i18n="nav_mentors">Mentors</span>
       </div>
       <div class="sidebar-item" onclick="switchTab('ranking')" data-tab="ranking">
         <span class="sidebar-item-icon">&#127942;</span> Ranking
       </div>
       <div class="sidebar-item" onclick="switchTab('learn')" data-tab="learn">
-        <span class="sidebar-item-icon">&#128218;</span> Aprender
+        <span class="sidebar-item-icon">&#128218;</span> <span data-i18n="nav_learn">Learn</span>
       </div>
       <div class="sidebar-item" onclick="switchTab('profile')" data-tab="profile">
-        <span class="sidebar-item-icon">&#128100;</span> Perfil
+        <span class="sidebar-item-icon">&#128100;</span> <span data-i18n="nav_profile">Profile</span>
       </div>
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-footer">
       <div class="sidebar-item" onclick="handleLogout()">
-        <span class="sidebar-item-icon">&#128682;</span> Cerrar Sesion
+        <span class="sidebar-item-icon">&#128682;</span> <span data-i18n="logout">Sign Out</span>
       </div>
     </div>
     <div class="sidebar-version">&copy; 2026 Ludex &middot; Built on OneChain</div>
@@ -875,8 +905,8 @@ a{color:var(--cyan);text-decoration:none}
     <div class="page-content screen active" id="tab-home">
       <div class="home-header">
         <div>
-          <div class="home-welcome" id="welcome-msg">Hola! ...</div>
-          <div class="home-subtitle">Sigue aprendiendo, sigue ganando</div>
+          <div class="home-welcome" id="welcome-msg">Hello! ...</div>
+          <div class="home-subtitle" data-i18n="keep_learning">Keep learning, keep earning</div>
         </div>
       </div>
 
@@ -885,7 +915,7 @@ a{color:var(--cyan);text-decoration:none}
           <div class="avatar avatar-geometric" id="home-avatar">?</div>
           <div class="player-info">
             <div class="player-name" id="home-username">---</div>
-            <div class="level-badge" id="home-level">Nv. 1</div>
+            <div class="level-badge" id="home-level">Lv. 1</div>
           </div>
         </div>
         <div class="xp-bar-wrap">
@@ -898,7 +928,7 @@ a{color:var(--cyan);text-decoration:none}
         <div class="streak-fire">&#128293;</div>
         <div class="streak-main">
           <div class="streak-count" id="streak-count">0</div>
-          <div class="streak-label">dias de racha</div>
+          <div class="streak-label" data-i18n="streak_days">day streak</div>
           <div class="streak-dots" id="streak-dots"></div>
         </div>
       </div>
@@ -906,8 +936,8 @@ a{color:var(--cyan);text-decoration:none}
       <div class="daily-banner" id="daily-quest" onclick="switchTab('quests')">
         <div class="daily-banner-icon">&#127919;</div>
         <div class="daily-banner-info">
-          <div class="daily-banner-title">Desafio del Dia</div>
-          <div class="daily-banner-desc" id="daily-quest-desc">Completa un desafio hoy para mantener tu racha</div>
+          <div class="daily-banner-title" data-i18n="daily_challenge">Daily Challenge</div>
+          <div class="daily-banner-desc" id="daily-quest-desc" data-i18n="daily_challenge_desc">Complete a challenge today to keep your streak</div>
           <div class="daily-banner-reward">
             <span class="pill pill-cyan">+100 XP</span>
             <span class="pill pill-orange">+50 LDX</span>
@@ -936,13 +966,13 @@ a{color:var(--cyan);text-decoration:none}
         <div class="stat-box">
           <div class="stat-icon">&#127941;</div>
           <div class="stat-value" id="stat-badges">0</div>
-          <div class="stat-label">Insignias</div>
+          <div class="stat-label" data-i18n="badges">Badges</div>
         </div>
       </div>
 
       <div class="weekly-goals" id="weekly-goals">
         <div class="weekly-goals-header">
-          <div class="weekly-goals-title">&#127919; Meta Semanal</div>
+          <div class="weekly-goals-title" data-i18n="weekly_goal">&#127919; Weekly Goal</div>
           <div class="weekly-goals-ring">
             <svg viewBox="0 0 48 48">
               <circle cx="24" cy="24" r="20" fill="none" stroke="var(--bg-surface)" stroke-width="4"/>
@@ -952,14 +982,14 @@ a{color:var(--cyan);text-decoration:none}
             <div class="weekly-goals-ring-text" id="weekly-ring-text">1/3</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary)">Completa 3 quests esta semana</div>
+        <div style="font-size:13px;color:var(--text-secondary)" data-i18n="complete_3_quests">Complete 3 quests this week</div>
       </div>
 
-      <div class="section-title">&#128218; Categorias</div>
+      <div class="section-title" data-i18n="categories">&#128218; Categories</div>
       <div class="category-grid" id="category-grid"></div>
 
       <div class="activity-feed" id="activity-feed" style="margin-top:28px">
-        <div class="section-title">&#9889; Actividad Reciente</div>
+        <div class="section-title" data-i18n="recent_activity">&#9889; Recent Activity</div>
         <div id="activity-list"></div>
       </div>
     </div>
@@ -968,7 +998,7 @@ a{color:var(--cyan);text-decoration:none}
     <div class="page-content screen" id="tab-quests">
       <div class="quest-header">
         <div class="quest-header-title">&#127919; Quests</div>
-        <div class="quest-header-sub">Pon a prueba tus conocimientos financieros y gana recompensas</div>
+        <div class="quest-header-sub" data-i18n="quest_sub">Test your financial knowledge and earn rewards</div>
       </div>
       <div id="featured-quest-wrap"></div>
       <div class="quest-filters" id="quest-filters"></div>
@@ -978,8 +1008,8 @@ a{color:var(--cyan);text-decoration:none}
         <div class="skeleton skel-card"></div>
       </div>
       <div class="generate-section">
-        <div class="generate-title">&#9889; Generar Desafio con IA</div>
-        <div class="generate-desc">La IA genera preguntas personalizadas para tu nivel</div>
+        <div class="generate-title" data-i18n="generate_challenge">&#9889; Generate AI Challenge</div>
+        <div class="generate-desc" data-i18n="generate_desc">AI generates personalized questions for your level</div>
         <div class="generate-cats" id="challenge-cats"></div>
       </div>
     </div>
@@ -987,8 +1017,8 @@ a{color:var(--cyan);text-decoration:none}
     <!-- NPCs TAB -->
     <div class="page-content screen" id="tab-npcs">
       <div class="mentor-header">
-        <div class="mentor-header-title">&#128172; Mentores IA</div>
-        <div class="mentor-header-sub">Chatea con mentores expertos que te guian en tu aprendizaje</div>
+        <div class="mentor-header-title" data-i18n="ai_mentors">&#128172; AI Mentors</div>
+        <div class="mentor-header-sub" data-i18n="mentor_sub">Chat with expert mentors who guide your learning</div>
       </div>
       <div class="mentor-scroll" id="mentor-scroll">
         <div class="skeleton skel-card" style="min-width:260px;height:180px"></div>
@@ -1006,20 +1036,20 @@ a{color:var(--cyan);text-decoration:none}
     <div class="page-content screen" id="tab-ranking">
       <div class="rank-header">
         <div class="rank-header-title">&#127942; Ranking</div>
-        <div class="rank-header-sub">Compite con otros jugadores por la cima</div>
+        <div class="rank-header-sub" data-i18n="rank_sub">Compete with other players for the top</div>
       </div>
       <div class="league-banner" id="league-banner">
         <div class="league-icon">&#128142;</div>
         <div>
-          <div class="league-name">Liga Diamante</div>
-          <div class="league-info">Top jugadores de Ludex</div>
+          <div class="league-name" data-i18n="diamond_league">Diamond League</div>
+          <div class="league-info" data-i18n="top_players">Top Ludex players</div>
         </div>
       </div>
       <div class="rank-tabs">
         <div class="rank-tab active" onclick="setRankTab('global',this)">Global</div>
-        <div class="rank-tab" onclick="setRankTab('weekly',this)">Semanal</div>
-        <div class="rank-tab" onclick="setRankTab('friends',this)">Amigos</div>
-        <div class="rank-tab" onclick="setRankTab('teams',this)">Equipos</div>
+        <div class="rank-tab" onclick="setRankTab('weekly',this)" data-i18n="weekly">Weekly</div>
+        <div class="rank-tab" onclick="setRankTab('friends',this)" data-i18n="friends">Friends</div>
+        <div class="rank-tab" onclick="setRankTab('teams',this)" data-i18n="teams">Teams</div>
       </div>
       <div id="rank-your-stats" class="rank-your-stats" style="display:none"></div>
       <div id="rank-podium" class="rank-podium"></div>
@@ -1033,8 +1063,8 @@ a{color:var(--cyan);text-decoration:none}
     <!-- LEARN TAB -->
     <div class="page-content screen" id="tab-learn">
       <div class="learn-header">
-        <div class="learn-header-title">&#128218; Ruta de Aprendizaje</div>
-        <div class="learn-header-sub">Domina cada categoria y conviertete en un experto financiero</div>
+        <div class="learn-header-title" data-i18n="learning_path">&#128218; Learning Path</div>
+        <div class="learn-header-sub" data-i18n="learn_sub">Master each category and become a financial expert</div>
       </div>
       <div class="skill-path" id="skill-path"></div>
     </div>
@@ -1044,9 +1074,9 @@ a{color:var(--cyan);text-decoration:none}
       <div class="profile-hero">
         <div class="avatar avatar-xl avatar-geometric" id="profile-avatar">?</div>
         <div class="profile-username" id="profile-username">---</div>
-        <div class="level-badge" id="profile-level" style="margin-top:10px">Nv. 1</div>
+        <div class="level-badge" id="profile-level" style="margin-top:10px">Lv. 1</div>
         <div class="profile-wallet" id="profile-wallet"></div>
-        <div class="profile-member" id="profile-member">Miembro desde 2026</div>
+        <div class="profile-member" id="profile-member" data-i18n="member_since">Member since 2026</div>
       </div>
 
       <div class="level-ring" id="level-ring">
@@ -1065,7 +1095,7 @@ a{color:var(--cyan);text-decoration:none}
       <div class="profile-stats" id="profile-stats"></div>
 
       <div class="badges-section">
-        <div class="section-title">&#127941; Coleccion de Insignias</div>
+        <div class="section-title" data-i18n="badge_collection">&#127941; Badge Collection</div>
         <div class="badges-grid" id="badges-grid"></div>
       </div>
 
@@ -1075,7 +1105,7 @@ a{color:var(--cyan);text-decoration:none}
       </div>
 
       <div class="logout-section">
-        <button class="logout-btn" onclick="handleLogout()">&#128682; Cerrar Sesion</button>
+        <button class="logout-btn" onclick="handleLogout()" data-i18n="logout_btn">&#128682; Sign Out</button>
       </div>
     </div>
 
@@ -1084,19 +1114,19 @@ a{color:var(--cyan);text-decoration:none}
   <!-- MOBILE TAB BAR -->
   <nav class="tab-bar">
     <div class="tab-item active" onclick="switchTab('home')" data-tab="home">
-      <span class="tab-icon">&#127968;</span><span class="tab-label">Inicio</span>
+      <span class="tab-icon">&#127968;</span><span class="tab-label" data-i18n="nav_home">Home</span>
     </div>
     <div class="tab-item" onclick="switchTab('quests')" data-tab="quests">
       <span class="tab-icon">&#127919;</span><span class="tab-label">Quests</span>
     </div>
     <div class="tab-item" onclick="switchTab('npcs')" data-tab="npcs">
-      <span class="tab-icon">&#128172;</span><span class="tab-label">Mentores</span>
+      <span class="tab-icon">&#128172;</span><span class="tab-label" data-i18n="nav_mentors">Mentors</span>
     </div>
     <div class="tab-item" onclick="switchTab('ranking')" data-tab="ranking">
       <span class="tab-icon">&#127942;</span><span class="tab-label">Ranking</span>
     </div>
     <div class="tab-item" onclick="switchTab('profile')" data-tab="profile">
-      <span class="tab-icon">&#128100;</span><span class="tab-label">Perfil</span>
+      <span class="tab-icon">&#128100;</span><span class="tab-label" data-i18n="nav_profile">Profile</span>
     </div>
   </nav>
 
@@ -1124,7 +1154,7 @@ a{color:var(--cyan);text-decoration:none}
   <div class="chat-messages" id="chat-messages"></div>
   <div class="chat-suggestions" id="chat-suggestions"></div>
   <div class="chat-input-wrap">
-    <input type="text" id="chat-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')sendChat()">
+    <input type="text" id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendChat()">
     <button class="chat-send" id="chat-send-btn" onclick="sendChat()">&#10148;</button>
     <button class="chat-voice">&#127908;</button>
   </div>
@@ -1151,38 +1181,93 @@ let state = {
   questFilter: 'all',
 };
 
-const CATS = [
-  { id: 0, name: 'Presupuesto', icon: '\uD83D\uDCB0', color: 'var(--green)', colorName: 'green', lessons: 4 },
-  { id: 1, name: 'Inversion', icon: '\uD83D\uDCC8', color: 'var(--cyan)', colorName: 'cyan', lessons: 4 },
-  { id: 2, name: 'Ahorro', icon: '\uD83C\uDFE6', color: 'var(--yellow)', colorName: 'yellow', lessons: 3 },
-  { id: 3, name: 'Credito', icon: '\uD83D\uDCB3', color: 'var(--red)', colorName: 'red', lessons: 4 },
-  { id: 4, name: 'Crypto', icon: '\u26D3\uFE0F', color: 'var(--purple)', colorName: 'purple', lessons: 4 },
-  { id: 5, name: 'Impuestos', icon: '\uD83D\uDCCB', color: 'var(--orange)', colorName: 'orange', lessons: 3 },
-];
+const CATS_I18N = {
+  en: [
+    { id: 0, name: 'Budgeting', icon: '\uD83D\uDCB0', color: 'var(--green)', colorName: 'green', lessons: 4 },
+    { id: 1, name: 'Investing', icon: '\uD83D\uDCC8', color: 'var(--cyan)', colorName: 'cyan', lessons: 4 },
+    { id: 2, name: 'Saving', icon: '\uD83C\uDFE6', color: 'var(--yellow)', colorName: 'yellow', lessons: 3 },
+    { id: 3, name: 'Credit', icon: '\uD83D\uDCB3', color: 'var(--red)', colorName: 'red', lessons: 4 },
+    { id: 4, name: 'Crypto', icon: '\u26D3\uFE0F', color: 'var(--purple)', colorName: 'purple', lessons: 4 },
+    { id: 5, name: 'Taxes', icon: '\uD83D\uDCCB', color: 'var(--orange)', colorName: 'orange', lessons: 3 },
+  ],
+  es: [
+    { id: 0, name: 'Presupuesto', icon: '\uD83D\uDCB0', color: 'var(--green)', colorName: 'green', lessons: 4 },
+    { id: 1, name: 'Inversion', icon: '\uD83D\uDCC8', color: 'var(--cyan)', colorName: 'cyan', lessons: 4 },
+    { id: 2, name: 'Ahorro', icon: '\uD83C\uDFE6', color: 'var(--yellow)', colorName: 'yellow', lessons: 3 },
+    { id: 3, name: 'Credito', icon: '\uD83D\uDCB3', color: 'var(--red)', colorName: 'red', lessons: 4 },
+    { id: 4, name: 'Crypto', icon: '\u26D3\uFE0F', color: 'var(--purple)', colorName: 'purple', lessons: 4 },
+    { id: 5, name: 'Impuestos', icon: '\uD83D\uDCCB', color: 'var(--orange)', colorName: 'orange', lessons: 3 },
+  ],
+  zh: [
+    { id: 0, name: '\u9810\u7B97', icon: '\uD83D\uDCB0', color: 'var(--green)', colorName: 'green', lessons: 4 },
+    { id: 1, name: '\u6295\u8CC7', icon: '\uD83D\uDCC8', color: 'var(--cyan)', colorName: 'cyan', lessons: 4 },
+    { id: 2, name: '\u5132\u84C4', icon: '\uD83C\uDFE6', color: 'var(--yellow)', colorName: 'yellow', lessons: 3 },
+    { id: 3, name: '\u4FE1\u8CB8', icon: '\uD83D\uDCB3', color: 'var(--red)', colorName: 'red', lessons: 4 },
+    { id: 4, name: '\u52A0\u5BC6\u8CA8\u5E63', icon: '\u26D3\uFE0F', color: 'var(--purple)', colorName: 'purple', lessons: 4 },
+    { id: 5, name: '\u7A05\u52D9', icon: '\uD83D\uDCCB', color: 'var(--orange)', colorName: 'orange', lessons: 3 },
+  ]
+};
+let CATS = CATS_I18N[localStorage.getItem('ldx_lang') || 'en'];
 
-const MASTERY_LEVELS = ['Novato', 'Aprendiz', 'Intermedio', 'Experto', 'Maestro'];
+const MASTERY_I18N = {
+  en: ['Novice', 'Apprentice', 'Intermediate', 'Expert', 'Master'],
+  es: ['Novato', 'Aprendiz', 'Intermedio', 'Experto', 'Maestro'],
+  zh: ['\u65B0\u624B', '\u5B78\u5F92', '\u4E2D\u7D1A', '\u5C08\u5BB6', '\u5927\u5E2B']
+};
+let MASTERY_LEVELS = MASTERY_I18N[localStorage.getItem('ldx_lang') || 'en'];
 
 const NPC_STYLES = {
-  professor_luna: { emoji: '\uD83C\uDF19', css: 'luna', desc: 'Presupuesto y finanzas personales' },
-  trader_rex: { emoji: '\uD83E\uDD96', css: 'rex', desc: 'Inversiones y mercados' },
-  crypto_sage: { emoji: '\uD83E\uDDD9', css: 'sage', desc: 'Blockchain y DeFi' },
-  credit_fox: { emoji: '\uD83E\uDD8A', css: 'fox', desc: 'Credito y deuda' },
+  professor_luna: { emoji: '\uD83C\uDF19', css: 'luna', desc: 'Budgeting & personal finance' },
+  trader_rex: { emoji: '\uD83E\uDD96', css: 'rex', desc: 'Investing & markets' },
+  crypto_sage: { emoji: '\uD83E\uDDD9', css: 'sage', desc: 'Blockchain & DeFi' },
+  credit_fox: { emoji: '\uD83E\uDD8A', css: 'fox', desc: 'Credit & debt' },
 };
 
-const ALL_BADGES = [
-  { id: 'first_quest', name: 'Primer Paso', icon: '\uD83D\uDC63', rarity: 0 },
-  { id: 'quest_10', name: 'Buscador', icon: '\uD83D\uDD0D', rarity: 1 },
-  { id: 'quest_50', name: 'Erudito', icon: '\uD83C\uDF93', rarity: 2 },
-  { id: 'quest_100', name: 'Sabio Financiero', icon: '\uD83E\uDDD9', rarity: 3 },
-  { id: 'streak_7', name: 'Guerrero Semanal', icon: '\u2694\uFE0F', rarity: 1 },
-  { id: 'streak_30', name: 'Rey Constante', icon: '\uD83D\uDC51', rarity: 3 },
-  { id: 'level_10', name: 'Estrella', icon: '\u2B50', rarity: 1 },
-  { id: 'level_25', name: 'Profesional', icon: '\uD83D\uDCBC', rarity: 2 },
-  { id: 'level_50', name: 'Maestro', icon: '\uD83D\uDCB8', rarity: 3 },
-  { id: 'all_categories', name: 'Renacentista', icon: '\uD83C\uDFA8', rarity: 3 },
-  { id: 'staker', name: 'Manos Diamante', icon: '\uD83D\uDC8E', rarity: 1 },
-  { id: 'social_5', name: 'Social', icon: '\uD83E\uDD1D', rarity: 1 },
-];
+const BADGES_I18N = {
+  en: [
+    { id: 'first_quest', name: 'First Step', icon: '\uD83D\uDC63', rarity: 0 },
+    { id: 'quest_10', name: 'Seeker', icon: '\uD83D\uDD0D', rarity: 1 },
+    { id: 'quest_50', name: 'Scholar', icon: '\uD83C\uDF93', rarity: 2 },
+    { id: 'quest_100', name: 'Financial Sage', icon: '\uD83E\uDDD9', rarity: 3 },
+    { id: 'streak_7', name: 'Weekly Warrior', icon: '\u2694\uFE0F', rarity: 1 },
+    { id: 'streak_30', name: 'Consistency King', icon: '\uD83D\uDC51', rarity: 3 },
+    { id: 'level_10', name: 'Rising Star', icon: '\u2B50', rarity: 1 },
+    { id: 'level_25', name: 'Professional', icon: '\uD83D\uDCBC', rarity: 2 },
+    { id: 'level_50', name: 'Master', icon: '\uD83D\uDCB8', rarity: 3 },
+    { id: 'all_categories', name: 'Renaissance', icon: '\uD83C\uDFA8', rarity: 3 },
+    { id: 'staker', name: 'Diamond Hands', icon: '\uD83D\uDC8E', rarity: 1 },
+    { id: 'social_5', name: 'Social', icon: '\uD83E\uDD1D', rarity: 1 },
+  ],
+  es: [
+    { id: 'first_quest', name: 'Primer Paso', icon: '\uD83D\uDC63', rarity: 0 },
+    { id: 'quest_10', name: 'Buscador', icon: '\uD83D\uDD0D', rarity: 1 },
+    { id: 'quest_50', name: 'Erudito', icon: '\uD83C\uDF93', rarity: 2 },
+    { id: 'quest_100', name: 'Sabio Financiero', icon: '\uD83E\uDDD9', rarity: 3 },
+    { id: 'streak_7', name: 'Guerrero Semanal', icon: '\u2694\uFE0F', rarity: 1 },
+    { id: 'streak_30', name: 'Rey Constante', icon: '\uD83D\uDC51', rarity: 3 },
+    { id: 'level_10', name: 'Estrella', icon: '\u2B50', rarity: 1 },
+    { id: 'level_25', name: 'Profesional', icon: '\uD83D\uDCBC', rarity: 2 },
+    { id: 'level_50', name: 'Maestro', icon: '\uD83D\uDCB8', rarity: 3 },
+    { id: 'all_categories', name: 'Renacentista', icon: '\uD83C\uDFA8', rarity: 3 },
+    { id: 'staker', name: 'Manos Diamante', icon: '\uD83D\uDC8E', rarity: 1 },
+    { id: 'social_5', name: 'Social', icon: '\uD83E\uDD1D', rarity: 1 },
+  ],
+  zh: [
+    { id: 'first_quest', name: '\u7B2C\u4E00\u6B65', icon: '\uD83D\uDC63', rarity: 0 },
+    { id: 'quest_10', name: '\u63A2\u7D22\u8005', icon: '\uD83D\uDD0D', rarity: 1 },
+    { id: 'quest_50', name: '\u5B78\u8005', icon: '\uD83C\uDF93', rarity: 2 },
+    { id: 'quest_100', name: '\u8CA1\u52D9\u667A\u8005', icon: '\uD83E\uDDD9', rarity: 3 },
+    { id: 'streak_7', name: '\u9031\u9593\u6230\u58EB', icon: '\u2694\uFE0F', rarity: 1 },
+    { id: 'streak_30', name: '\u6046\u5FC3\u4E4B\u738B', icon: '\uD83D\uDC51', rarity: 3 },
+    { id: 'level_10', name: '\u65B0\u661F', icon: '\u2B50', rarity: 1 },
+    { id: 'level_25', name: '\u5C08\u696D\u4EBA\u58EB', icon: '\uD83D\uDCBC', rarity: 2 },
+    { id: 'level_50', name: '\u5927\u5E2B', icon: '\uD83D\uDCB8', rarity: 3 },
+    { id: 'all_categories', name: '\u5168\u80FD\u7387\u624D', icon: '\uD83C\uDFA8', rarity: 3 },
+    { id: 'staker', name: '\u947D\u77F3\u624B', icon: '\uD83D\uDC8E', rarity: 1 },
+    { id: 'social_5', name: '\u793E\u4EA4\u9054\u4EBA', icon: '\uD83E\uDD1D', rarity: 1 },
+  ]
+};
+let ALL_BADGES = BADGES_I18N[localStorage.getItem('ldx_lang') || 'en'];
 
 // ═══════════════════════════════════════════
 //  Auth Particles
@@ -1241,8 +1326,8 @@ async function handleRegister() {
   const errEl = document.getElementById('reg-error');
   const btn = document.getElementById('reg-btn');
   errEl.textContent = '';
-  if (!wallet || !username) { errEl.textContent = 'Completa todos los campos'; return; }
-  btn.disabled = true; btn.textContent = 'Creando...';
+  if (!wallet || !username) { errEl.textContent = t('fill_all_fields'); return; }
+  btn.disabled = true; btn.textContent = t('creating');
   try {
     const data = await api('POST', '/players', { wallet_address: wallet, username });
     state.token = data.token;
@@ -1251,12 +1336,12 @@ async function handleRegister() {
     localStorage.setItem('ldx_token', state.token);
     localStorage.setItem('ldx_wallet', state.wallet);
     localStorage.setItem('ldx_username', state.username);
-    toast('success', 'Bienvenido a Ludex!', `Tu aventura comienza ahora, ${state.username}`);
+    toast('success', t('welcome_ludex'), t('adventure_begins').replace('{name}', state.username));
     enterApp();
   } catch (e) {
     errEl.textContent = e.message;
   } finally {
-    btn.disabled = false; btn.textContent = 'Crear Cuenta';
+    btn.disabled = false; btn.textContent = t('create_account');
   }
 }
 
@@ -1266,8 +1351,8 @@ async function handleLogin() {
   const errEl = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
   errEl.textContent = '';
-  if (!wallet || !username) { errEl.textContent = 'Completa todos los campos'; return; }
-  btn.disabled = true; btn.textContent = 'Entrando...';
+  if (!wallet || !username) { errEl.textContent = t('fill_all_fields'); return; }
+  btn.disabled = true; btn.textContent = t('signing_in');
   try {
     const data = await api('POST', '/auth/login', { wallet_address: wallet, username });
     state.token = data.token;
@@ -1276,12 +1361,12 @@ async function handleLogin() {
     localStorage.setItem('ldx_token', state.token);
     localStorage.setItem('ldx_wallet', state.wallet);
     localStorage.setItem('ldx_username', state.username);
-    toast('success', 'Bienvenido de vuelta!', `Hola, ${state.username}`);
+    toast('success', t('welcome_back'), `${t('hello')}, ${state.username}`);
     enterApp();
   } catch (e) {
     errEl.textContent = e.message;
   } finally {
-    btn.disabled = false; btn.textContent = 'Iniciar Sesion';
+    btn.disabled = false; btn.textContent = t('sign_in');
   }
 }
 
@@ -1307,14 +1392,14 @@ async function enterApp() {
 async function seedQuestsIfEmpty() {
   if (state.quests.length > 0) return;
   const starters = [
-    { title: 'Regla 50/30/20', description: 'Aprende como distribuir tu ingreso con la regla mas popular de presupuesto personal.', category: 0, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
-    { title: 'Interes Compuesto', description: 'Descubre el poder del interes compuesto y como puede hacer crecer tu dinero exponencialmente.', category: 1, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
-    { title: 'Fondo de Emergencia', description: 'Aprende por que necesitas un fondo de emergencia y como construir uno desde cero.', category: 2, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
-    { title: 'Score Crediticio', description: 'Entiende como funciona tu puntaje de credito y que factores lo afectan.', category: 3, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
-    { title: 'Blockchain Basico', description: 'Introduccion a la tecnologia blockchain, wallets y claves privadas.', category: 4, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
-    { title: 'Impuestos 101', description: 'Conceptos basicos de impuestos: brackets, deducciones y creditos fiscales.', category: 5, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
-    { title: 'Diversificacion', description: 'Como reducir riesgo distribuyendo tus inversiones entre diferentes activos.', category: 1, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
-    { title: 'Estrategias de Ahorro', description: 'Metodos avanzados para optimizar tus ahorros y alcanzar metas financieras.', category: 2, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
+    { title: '50/30/20 Rule', description: 'Learn how to allocate your income using the most popular personal budgeting rule.', category: 0, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Compound Interest', description: 'Discover the power of compound interest and how it can grow your money exponentially.', category: 1, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Emergency Fund', description: 'Learn why you need an emergency fund and how to build one from scratch.', category: 2, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Credit Score', description: 'Understand how your credit score works and what factors affect it.', category: 3, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Blockchain Basics', description: 'Introduction to blockchain technology, wallets, and private keys.', category: 4, difficulty: 1, xp_reward: 75, token_reward: 15000000 },
+    { title: 'Taxes 101', description: 'Tax basics: brackets, deductions, and tax credits.', category: 5, difficulty: 0, xp_reward: 50, token_reward: 10000000 },
+    { title: 'Diversification', description: 'How to reduce risk by distributing your investments across different assets.', category: 1, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
+    { title: 'Saving Strategies', description: 'Advanced methods to optimize your savings and reach financial goals.', category: 2, difficulty: 2, xp_reward: 100, token_reward: 20000000 },
   ];
   try {
     for (const q of starters) await api('POST', '/quests', q);
@@ -1340,7 +1425,7 @@ async function loadPlayerData() {
   } catch (e) {
     if (e.message.includes('401') || e.message.includes('expired')) {
       handleLogout();
-      toast('error', 'Sesion expirada', 'Inicia sesion de nuevo');
+      toast('error', t('session_expired'), t('sign_in_again'));
     }
   }
 }
@@ -1408,10 +1493,10 @@ function renderHome() {
   const pr = state.progress;
   if (!p || !pr) return;
 
-  document.getElementById('welcome-msg').textContent = `Hola, ${p.username}! \uD83D\uDC4B`;
+  document.getElementById('welcome-msg').textContent = `${t('hello')}, ${p.username}! \uD83D\uDC4B`;
   document.getElementById('home-avatar').textContent = p.username[0].toUpperCase();
   document.getElementById('home-username').textContent = p.username;
-  document.getElementById('home-level').textContent = `Nv. ${p.level}`;
+  document.getElementById('home-level').textContent = `Lv. ${p.level}`;
   document.getElementById('home-xp-text').textContent = `${pr.xp.toLocaleString()} / ${pr.xp_to_next_level.toLocaleString()} XP`;
   document.getElementById('home-xp-pct').textContent = `${pr.progress_percent}%`;
   setTimeout(() => { document.getElementById('home-xp-fill').style.width = `${pr.progress_percent}%`; }, 100);
@@ -1461,7 +1546,7 @@ function renderHome() {
       <div class="cat-name">${c.name}</div>
       <div class="cat-mastery" style="color:${masteryColors[masteryIdx]}">${MASTERY_LEVELS[masteryIdx]}</div>
       <div class="cat-progress-bar"><div class="cat-progress-fill" style="width:${pct}%;background:${c.color}"></div></div>
-      <div class="cat-progress-label">${done}/${c.lessons} lecciones</div>
+      <div class="cat-progress-label">${done}/${c.lessons} ${t('lessons')}</div>
     </div>`;
   }).join('');
 
@@ -1469,16 +1554,16 @@ function renderHome() {
   const actList = document.getElementById('activity-list');
   const activities = [];
   if (pr.total_quests_completed > 0) {
-    activities.push({ icon: 'xp', emoji: '&#9889;', text: `<strong>${pr.total_quests_completed}</strong> quests completadas`, time: 'Total' });
+    activities.push({ icon: 'xp', emoji: '&#9889;', text: `<strong>${pr.total_quests_completed}</strong> ${t('quests_completed')}`, time: t('total') });
   }
   if (pr.badges_count > 0) {
-    activities.push({ icon: 'badge', emoji: '&#127941;', text: `<strong>${pr.badges_count}</strong> insignias ganadas`, time: 'Total' });
+    activities.push({ icon: 'badge', emoji: '&#127941;', text: `<strong>${pr.badges_count}</strong> ${t('badges_earned')}`, time: t('total') });
   }
   if (pr.daily_streak > 0) {
-    activities.push({ icon: 'rank', emoji: '&#128293;', text: `Racha de <strong>${pr.daily_streak} dias</strong> seguidos`, time: 'Activa' });
+    activities.push({ icon: 'rank', emoji: '&#128293;', text: `<strong>${pr.daily_streak} ${t('day_streak_short')}</strong>`, time: t('active') });
   }
   if (p.level > 1) {
-    activities.push({ icon: 'xp', emoji: '&#11088;', text: `Alcanzaste el <strong>nivel ${p.level}</strong>`, time: 'Logro' });
+    activities.push({ icon: 'xp', emoji: '&#11088;', text: `${t('reached')} <strong>${t('level')} ${p.level}</strong>`, time: t('achievement') });
   }
   actList.innerHTML = activities.length ? activities.map(a =>
     `<div class="activity-item">
@@ -1486,7 +1571,7 @@ function renderHome() {
       <div class="activity-text">${a.text}</div>
       <div class="activity-time">${a.time}</div>
     </div>`
-  ).join('') : '<div style="color:var(--text-muted);font-size:13px;padding:12px 0">Completa quests para ver tu actividad aqui</div>';
+  ).join('') : `<div style="color:var(--text-muted);font-size:13px;padding:12px 0">${t('complete_quests_activity')}</div>`;
 }
 
 function formatTokens(amount) {
@@ -1505,7 +1590,7 @@ function renderQuests() {
     const fq = state.quests[Math.floor(Math.random() * state.quests.length)];
     const fcat = CATS[fq.category] || CATS[0];
     featuredWrap.innerHTML = `<div class="featured-quest" onclick="openQuest('${fq.id}')">
-      <div class="featured-quest-pill"><span class="pill pill-purple">Quest Destacada</span></div>
+      <div class="featured-quest-pill"><span class="pill pill-purple">${t('featured_quest')}</span></div>
       <div class="featured-quest-title">${fq.title}</div>
       <div class="featured-quest-desc">${fq.description}</div>
       <div class="featured-quest-rewards">
@@ -1518,7 +1603,7 @@ function renderQuests() {
 
   // Filters
   const filterWrap = document.getElementById('quest-filters');
-  filterWrap.innerHTML = `<div class="filter-chip ${state.questFilter === 'all' ? 'active' : ''}" onclick="filterQuests('all')">Todas</div>` +
+  filterWrap.innerHTML = `<div class="filter-chip ${state.questFilter === 'all' ? 'active' : ''}" onclick="filterQuests('all')">${t('all')}</div>` +
     CATS.map(c => `<div class="filter-chip ${state.questFilter === String(c.id) ? 'active' : ''}" onclick="filterQuests('${c.id}')">${c.icon} ${c.name}</div>`).join('');
 
   // Challenge generation buttons
@@ -1534,15 +1619,15 @@ function renderQuests() {
 
   if (!filtered.length) {
     list.innerHTML = `<div class="quest-empty" style="grid-column:1/-1"><div class="quest-empty-icon">&#128270;</div>
-      <p style="font-size:16px;font-weight:600">No hay quests disponibles</p>
-      <p style="font-size:13px;margin-top:8px">Genera un desafio con IA!</p></div>`;
+      <p style="font-size:16px;font-weight:600">${t('no_quests')}</p>
+      <p style="font-size:13px;margin-top:8px">${t('generate_ai_challenge')}</p></div>`;
     return;
   }
 
   list.innerHTML = filtered.map(q => {
     const cat = CATS[q.category] || CATS[0];
     const stars = '\u2B50'.repeat(q.difficulty + 1);
-    const diffLabels = ['Facil', 'Medio', 'Dificil'];
+    const diffLabels = [t('easy'), t('medium'), t('hard')];
     const catColors = ['pill-green','pill-cyan','pill-yellow','pill-red','pill-purple','pill-orange'];
     return `<div class="quest-card" data-cat="${q.category}" onclick="openQuest('${q.id}')">
       <div class="quest-card-top">
@@ -1579,7 +1664,7 @@ async function openQuest(questId) {
   const content = document.getElementById('quest-modal-content');
   const cat = CATS[quest.category] || CATS[0];
   const stars = '\u2B50'.repeat(quest.difficulty + 1);
-  const diffLabels = ['Facil', 'Medio', 'Dificil'];
+  const diffLabels = [t('easy'), t('medium'), t('hard')];
 
   content.innerHTML = `<div class="modal-handle"></div>
     <div class="modal-title">${quest.title}</div>
@@ -1600,7 +1685,7 @@ async function openQuest(questId) {
       </div>
     </div>
     <button class="btn btn-primary btn-block btn-lg btn-glow" id="start-challenge-btn" onclick="startChallenge(${quest.category})">
-      &#9889; Iniciar Desafio
+      &#9889; ${t('start_challenge')}
     </button>
     <div id="quiz-container" style="margin-top:20px"></div>`;
   modal.classList.add('open');
@@ -1621,8 +1706,8 @@ async function generateChallenge(category) {
   const level = state.player ? state.player.level : 1;
 
   content.innerHTML = `<div class="modal-handle"></div>
-    <div class="modal-title">${cat.icon} Desafio de ${cat.name}</div>
-    <div class="modal-desc">Generando preguntas con IA...</div>
+    <div class="modal-title">${cat.icon} ${cat.name} ${t('challenge')}</div>
+    <div class="modal-desc">${t('generating_questions')}</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div class="skeleton skel-line w80"></div>
       <div class="skeleton skel-line w60"></div>
@@ -1645,16 +1730,16 @@ async function generateChallenge(category) {
     content.innerHTML = `<div class="modal-handle"></div>
       <div style="text-align:center;padding:40px 0">
         <div style="font-size:48px;margin-bottom:12px">\u26A0\uFE0F</div>
-        <div class="modal-title" style="font-size:18px">Error al generar</div>
+        <div class="modal-title" style="font-size:18px">${t('generation_error')}</div>
         <div class="modal-desc">${e.message}</div>
-        <button class="btn btn-secondary btn-block" onclick="closeModal()">Cerrar</button>
+        <button class="btn btn-secondary btn-block" onclick="closeModal()">${t('close')}</button>
       </div>`;
   }
 }
 
 async function startChallenge(category) {
   const btn = document.getElementById('start-challenge-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Generando...'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('generating'); }
   await generateChallenge(category);
 }
 
@@ -1668,7 +1753,7 @@ function renderQuizQuestion() {
 
   content.innerHTML = `<div class="modal-handle"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div class="quiz-q-num">Pregunta ${idx + 1} de ${total}</div>
+      <div class="quiz-q-num">${t('question')} ${idx + 1} ${t('of')} ${total}</div>
     </div>
     <div class="quiz-progress">${currentQuiz.questions.map((_, i) =>
       `<div class="quiz-progress-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}"></div>`
@@ -1685,7 +1770,7 @@ function renderQuizQuestion() {
     </div>
     <div class="quiz-nav" id="quiz-nav" style="display:none">
       <button class="btn btn-primary btn-block btn-lg" id="quiz-next-btn" onclick="nextQuestion()">
-        ${idx + 1 === total ? 'Ver Resultado' : 'Siguiente \u2192'}
+        ${idx + 1 === total ? t('see_result') : t('next') + ' \u2192'}
       </button>
     </div>`;
 }
@@ -1731,38 +1816,38 @@ async function submitQuiz() {
 
     if (result.passed) {
       fireConfetti();
-      toast('success', 'Quest Completada!', `+${result.xp_earned} XP ganados`);
+      toast('success', t('quest_completed'), `+${result.xp_earned} ${t('xp_earned')}`);
       floatXP(result.xp_earned);
     }
 
     content.innerHTML = `<div class="modal-handle"></div>
       <div class="quiz-result">
         <div class="quiz-result-icon">${result.passed ? '\uD83C\uDF89' : '\uD83D\uDCDA'}</div>
-        <div class="quiz-result-title">${result.passed ? 'Excelente!' : 'Sigue aprendiendo!'}</div>
-        <div class="quiz-result-score">${result.correct}/${result.total} correctas (${result.score}%)</div>
+        <div class="quiz-result-title">${result.passed ? t('excellent') : t('keep_learning_short')}</div>
+        <div class="quiz-result-score">${result.correct}/${result.total} ${t('correct')} (${result.score}%)</div>
         ${result.passed ? `
         <div class="quiz-result-rewards">
           <div class="quiz-result-reward xp-anim">
             <div class="quiz-result-reward-val" style="color:var(--cyan)">+${result.xp_earned}</div>
-            <div class="quiz-result-reward-label">XP Ganados</div>
+            <div class="quiz-result-reward-label">${t('xp_earned')}</div>
           </div>
           <div class="quiz-result-reward xp-anim" style="animation-delay:.2s">
             <div class="quiz-result-reward-val" style="color:var(--orange)">+${formatTokens(result.token_reward)}</div>
             <div class="quiz-result-reward-label">LDX Tokens</div>
           </div>
         </div>
-        ${result.new_levels && result.new_levels.length ? `<div class="level-up-banner">&#11088; LEVEL UP! Nv. ${result.new_levels[result.new_levels.length - 1]}</div>` : ''}
+        ${result.new_levels && result.new_levels.length ? `<div class="level-up-banner">&#11088; LEVEL UP! Lv. ${result.new_levels[result.new_levels.length - 1]}</div>` : ''}
         ${result.badges_earned && result.badges_earned.length ? '<div style="margin:12px 0">' + result.badges_earned.map(b => `<div class="pill pill-cyan" style="margin:4px;font-size:13px;padding:6px 14px">&#127941; ${b.name}</div>`).join('') + '</div>' : ''}
         ` : `<p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px">${result.message}</p>`}
-        <div style="margin-top:8px;color:var(--text-secondary);font-size:14px">&#128293; Racha: ${result.daily_streak || 0} dias</div>
-        <button class="btn btn-primary btn-block btn-lg" style="margin-top:24px" onclick="closeModal();loadPlayerData();loadQuests()">Continuar</button>
+        <div style="margin-top:8px;color:var(--text-secondary);font-size:14px">&#128293; ${t('streak')}: ${result.daily_streak || 0} ${t('days')}</div>
+        <button class="btn btn-primary btn-block btn-lg" style="margin-top:24px" onclick="closeModal();loadPlayerData();loadQuests()">${t('continue')}</button>
       </div>`;
   } catch (e) {
     content.innerHTML = `<div class="modal-handle"></div>
       <div style="text-align:center;padding:40px 0">
         <div style="font-size:48px;margin-bottom:12px">\u26A0\uFE0F</div>
         <p style="color:var(--text-secondary)">${e.message}</p>
-        <button class="btn btn-secondary" style="margin-top:16px" onclick="closeModal()">Cerrar</button>
+        <button class="btn btn-secondary" style="margin-top:16px" onclick="closeModal()">${t('close')}</button>
       </div>`;
   }
 }
@@ -1772,8 +1857,8 @@ async function submitQuiz() {
 // ═══════════════════════════════════════════
 function renderNpcs() {
   if (!state.npcs.length) {
-    document.getElementById('mentor-scroll').innerHTML = '<p style="color:var(--text-secondary);padding:20px">No hay mentores disponibles</p>';
-    document.getElementById('npc-list').innerHTML = '<p style="color:var(--text-secondary);padding:20px">No hay mentores disponibles</p>';
+    document.getElementById('mentor-scroll').innerHTML = `<p style="color:var(--text-secondary);padding:20px">${t('no_mentors')}</p>`;
+    document.getElementById('npc-list').innerHTML = `<p style="color:var(--text-secondary);padding:20px">${t('no_mentors')}</p>`;
     return;
   }
 
@@ -1781,12 +1866,12 @@ function renderNpcs() {
   document.getElementById('mentor-scroll').innerHTML = state.npcs.map(npc => {
     const style = NPC_STYLES[npc.id] || { emoji: '\uD83E\uDDD1', css: '', desc: '' };
     return `<div class="npc-card" onclick="openChat('${npc.id}')">
-      <div class="npc-card-online"><span class="dot"></span> En linea</div>
+      <div class="npc-card-online"><span class="dot"></span> ${t('online')}</div>
       <div class="npc-avatar ${style.css}">${style.emoji}</div>
       <div class="npc-name">${npc.name}</div>
       <div class="npc-role">${npc.role}</div>
       <div class="npc-specialty">${npc.specialty}</div>
-      <div class="npc-xp-note">&#9889; +5 XP por mensaje</div>
+      <div class="npc-xp-note">&#9889; +5 XP ${t('per_message')}</div>
     </div>`;
   }).join('');
 
@@ -1825,7 +1910,7 @@ function openChat(npcId) {
     state.chatHistory[npcId] = [];
     msgs.innerHTML = `<div class="chat-msg npc">
       <div class="chat-msg-avatar npc-avatar ${style.css}" style="width:32px;height:32px;font-size:14px">${style.emoji}</div>
-      <div><div class="chat-msg-bubble">Hola${state.username ? ', ' + escapeHtml(state.username) : ''}! Soy ${escapeHtml(npc.name)}, tu ${escapeHtml(npc.role)}. Preguntame lo que quieras sobre ${escapeHtml(npc.specialty)}. Estoy aqui para ayudarte! &#128640;</div></div>
+      <div><div class="chat-msg-bubble">${t('hello')}${state.username ? ', ' + escapeHtml(state.username) : ''}! ${t('i_am')} ${escapeHtml(npc.name)}, ${t('your')} ${escapeHtml(npc.role)}. ${t('ask_me_about')} ${escapeHtml(npc.specialty)}. ${t('here_to_help')} &#128640;</div></div>
     </div>`;
   } else {
     renderChatHistory(npcId);
@@ -1842,12 +1927,12 @@ function openChat(npcId) {
 
 function getSuggestions(npcId) {
   const map = {
-    professor_luna: ['Como hago un presupuesto?', 'Que es la regla 50/30/20?', 'Tips para ahorrar'],
-    trader_rex: ['Que es un ETF?', 'Como empiezo a invertir?', 'Que es diversificacion?'],
-    crypto_sage: ['Que es DeFi?', 'Es seguro Bitcoin?', 'Que es un smart contract?'],
-    credit_fox: ['Como mejoro mi credito?', 'Que es un APR?', 'Avalancha vs bola de nieve?'],
+    professor_luna: [t('sug_budget'), t('sug_503020'), t('sug_saving_tips')],
+    trader_rex: [t('sug_etf'), t('sug_start_investing'), t('sug_diversification')],
+    crypto_sage: [t('sug_defi'), t('sug_bitcoin'), t('sug_smart_contract')],
+    credit_fox: [t('sug_credit'), t('sug_apr'), t('sug_avalanche')],
   };
-  return map[npcId] || ['Hola!', 'Explicame algo basico', 'Dame un consejo'];
+  return map[npcId] || [t('hello') + '!', t('sug_explain_basic'), t('sug_give_advice')];
 }
 
 function closeChat() {
@@ -1942,7 +2027,7 @@ function renderLeaderboard() {
   const lb = state.leaderboard;
   if (!lb || !lb.entries.length) {
     document.getElementById('rank-podium').innerHTML = '';
-    document.getElementById('rank-list').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">No hay jugadores todavia. Se el primero!</p>';
+    document.getElementById('rank-list').innerHTML = `<p style="color:var(--text-secondary);text-align:center;padding:40px">${t('no_players')}</p>`;
     document.getElementById('rank-your-stats').style.display = 'none';
     return;
   }
@@ -1958,7 +2043,7 @@ function renderLeaderboard() {
     const xpToClimb = nextUp ? nextUp.xp - me.xp : 0;
     yourStats.innerHTML = `
       <div class="rank-your-pos">#${me.rank}</div>
-      <div class="rank-your-info"><strong>Tu posicion actual</strong><br>${xpToClimb > 0 ? `${xpToClimb} XP para subir al #${me.rank - 1}` : 'Eres el primero!'}</div>
+      <div class="rank-your-info"><strong>${t('your_position')}</strong><br>${xpToClimb > 0 ? `${xpToClimb} XP ${t('to_climb')} #${me.rank - 1}` : t('you_are_first')}</div>
       <div style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--cyan)">${me.xp} XP</div>`;
   } else {
     yourStats.style.display = 'none';
@@ -1980,7 +2065,7 @@ function renderLeaderboard() {
       <div class="podium-rank ${rankColors[cls]}">#${p.rank}</div>
       <div class="avatar avatar-geometric ${cls === 'first' ? '' : 'avatar-sm'}">${escapeHtml(p.username[0]).toUpperCase()}</div>
       <div class="podium-name">${escapeHtml(p.username)}</div>
-      <div class="podium-xp">Nv.${p.level} - ${p.xp} XP</div>
+      <div class="podium-xp">Lv.${p.level} - ${p.xp} XP</div>
       <div class="podium-bar ${cls}"></div>
     </div>`;
   }).join('');
@@ -1994,8 +2079,8 @@ function renderLeaderboard() {
       <div class="rank-num">${p.rank}</div>
       <div class="avatar avatar-sm avatar-geometric">${escapeHtml(p.username[0]).toUpperCase()}</div>
       <div class="rank-info">
-        <div class="rank-name">${escapeHtml(p.username)} ${isMe ? '<span class="rank-me-badge">TU</span>' : ''}</div>
-        <div class="rank-meta"><span>Nv. ${p.level}</span><span>${p.badges_count} insignias</span></div>
+        <div class="rank-name">${escapeHtml(p.username)} ${isMe ? '<span class="rank-me-badge">YOU</span>' : ''}</div>
+        <div class="rank-meta"><span>Lv. ${p.level}</span><span>${p.badges_count} ${t('badges')}</span></div>
       </div>
       <div class="rank-xp">${p.xp} XP</div>
     </div>`;
@@ -2008,8 +2093,8 @@ function renderLeaderboard() {
       <div class="rank-num">${meInTop3.rank}</div>
       <div class="avatar avatar-sm avatar-geometric">${escapeHtml(meInTop3.username[0]).toUpperCase()}</div>
       <div class="rank-info">
-        <div class="rank-name">${escapeHtml(meInTop3.username)} <span class="rank-me-badge">TU</span></div>
-        <div class="rank-meta"><span>Nv. ${meInTop3.level}</span></div>
+        <div class="rank-name">${escapeHtml(meInTop3.username)} <span class="rank-me-badge">YOU</span></div>
+        <div class="rank-meta"><span>Lv. ${meInTop3.level}</span></div>
       </div>
       <div class="rank-xp">${meInTop3.xp} XP</div>
     </div>` + list.innerHTML;
@@ -2033,17 +2118,17 @@ async function loadTeamLeaderboard() {
     document.getElementById('rank-podium').innerHTML = '';
     document.getElementById('rank-your-stats').style.display = 'none';
     if (!data.teams || !data.teams.length) {
-      list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">No hay equipos todavia</p>';
+      list.innerHTML = `<p style="color:var(--text-secondary);text-align:center;padding:40px">${t('no_teams')}</p>`;
       return;
     }
-    list.innerHTML = data.teams.map(t => `<div class="rank-item">
-      <div class="rank-num">${t.rank}</div>
-      <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">${t.name[0].toUpperCase()}</div>
+    list.innerHTML = data.teams.map(tm => `<div class="rank-item">
+      <div class="rank-num">${tm.rank}</div>
+      <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">${tm.name[0].toUpperCase()}</div>
       <div class="rank-info">
-        <div class="rank-name">${t.name}</div>
-        <div class="rank-meta"><span>${t.member_count} miembros</span></div>
+        <div class="rank-name">${tm.name}</div>
+        <div class="rank-meta"><span>${tm.member_count} ${t('members')}</span></div>
       </div>
-      <div class="rank-xp">${t.total_xp} XP</div>
+      <div class="rank-xp">${tm.total_xp} XP</div>
     </div>`).join('');
   } catch (e) { /* ignore */ }
 }
@@ -2072,7 +2157,7 @@ function renderLearnTab() {
         <div class="skill-path-cat-icon">${cat.icon}</div>
         <div class="skill-path-cat-info">
           <div class="skill-path-cat-name">${cat.name}</div>
-          <div class="skill-path-cat-progress">${done}/${cat.lessons} lecciones - ${pct}%</div>
+          <div class="skill-path-cat-progress">${done}/${cat.lessons} ${t('lessons')} - ${pct}%</div>
           <div class="skill-path-cat-bar"><div class="skill-path-cat-fill" style="width:${pct}%;background:${cat.color}"></div></div>
         </div>
         <div class="skill-path-cat-chevron">&#9660;</div>
@@ -2082,7 +2167,7 @@ function renderLearnTab() {
           ${!l.locked ? `onclick="startLesson(${cat.id})"` : ''}>
           <div class="skill-node-icon">${l.completed ? '&#10003;' : l.current ? '&#9889;' : '&#128274;'}</div>
           <div class="skill-node-info">
-            <div class="skill-node-name">Leccion ${l.idx + 1}: ${cat.name}</div>
+            <div class="skill-node-name">${t('lesson')} ${l.idx + 1}: ${cat.name}</div>
             <div class="skill-node-stars">
               ${[0,1,2].map(s => `<span class="star ${l.completed && s <= Math.min(2, done) ? 'filled' : 'empty'}">${l.completed && s <= Math.min(2, done) ? '\u2B50' : '\u2606'}</span>`).join('')}
             </div>
@@ -2104,7 +2189,7 @@ function toggleCatNodes(header) {
 async function startLesson(catId) {
   try {
     await api('POST', `/lessons/${catId}/start`);
-    toast('info', 'Leccion iniciada', 'Generando contenido...');
+    toast('info', t('lesson_started'), t('generating_content'));
     generateChallenge(catId);
   } catch (e) {
     generateChallenge(catId);
@@ -2121,7 +2206,7 @@ function renderProfile() {
 
   document.getElementById('profile-avatar').textContent = p.username[0].toUpperCase();
   document.getElementById('profile-username').textContent = p.username;
-  document.getElementById('profile-level').textContent = `Nv. ${p.level}`;
+  document.getElementById('profile-level').textContent = `Lv. ${p.level}`;
   document.getElementById('profile-wallet').textContent = state.wallet.substring(0, 6) + '...' + state.wallet.substring(state.wallet.length - 4);
 
   // Level ring
@@ -2131,14 +2216,14 @@ function renderProfile() {
   setTimeout(() => {
     document.getElementById('level-ring-circle').style.strokeDashoffset = offset;
   }, 200);
-  document.getElementById('level-ring-label').textContent = `${pr.progress_percent}% al nivel ${p.level + 1}`;
+  document.getElementById('level-ring-label').textContent = `${pr.progress_percent}% ${t('to_level')} ${p.level + 1}`;
 
   // Stats
   document.getElementById('profile-stats').innerHTML = `
-    <div class="profile-stat-card"><div class="profile-stat-icon">&#9889;</div><div class="profile-stat-val">${pr.xp.toLocaleString()}</div><div class="profile-stat-label">XP Total</div></div>
+    <div class="profile-stat-card"><div class="profile-stat-icon">&#9889;</div><div class="profile-stat-val">${pr.xp.toLocaleString()}</div><div class="profile-stat-label">${t('total_xp')}</div></div>
     <div class="profile-stat-card"><div class="profile-stat-icon">&#127919;</div><div class="profile-stat-val">${pr.total_quests_completed}</div><div class="profile-stat-label">Quests</div></div>
-    <div class="profile-stat-card"><div class="profile-stat-icon">&#128293;</div><div class="profile-stat-val">${pr.daily_streak}</div><div class="profile-stat-label">Racha</div></div>
-    <div class="profile-stat-card"><div class="profile-stat-icon">&#127941;</div><div class="profile-stat-val">${pr.badges_count}</div><div class="profile-stat-label">Insignias</div></div>`;
+    <div class="profile-stat-card"><div class="profile-stat-icon">&#128293;</div><div class="profile-stat-val">${pr.daily_streak}</div><div class="profile-stat-label">${t('streak')}</div></div>
+    <div class="profile-stat-card"><div class="profile-stat-icon">&#127941;</div><div class="profile-stat-val">${pr.badges_count}</div><div class="profile-stat-label">${t('badges')}</div></div>`;
 
   // Badges
   const earnedIds = new Set((p.badges || []).map(b => b.id));
@@ -2147,7 +2232,7 @@ function renderProfile() {
     return `<div class="badge-item">
       <div class="badge-icon rarity-${b.rarity} ${earned ? 'earned' : 'locked'}">${earned ? b.icon : '?'}</div>
       <div class="badge-name">${earned ? b.name : '???'}</div>
-      ${earned ? '<div class="badge-date">Obtenida</div>' : ''}
+      ${earned ? `<div class="badge-date">${t('earned')}</div>` : ''}
     </div>`;
   }).join('');
 
@@ -2158,27 +2243,27 @@ function renderProfile() {
     const now = new Date();
     const daysLeft = Math.max(0, Math.ceil((unlockDate - now) / 86400000));
     stakeCard.innerHTML = `<div class="stake-active">
-      <div class="stake-title">&#128176; Staking Activo</div>
+      <div class="stake-title">&#128176; ${t('staking_active')}</div>
       <div class="stake-multiplier">${(p.staking.bonus_multiplier / 100).toFixed(2)}x</div>
-      <div style="font-size:14px;font-weight:600;margin-top:4px">Multiplicador de Recompensas</div>
-      <div class="stake-info">${p.staking.amount.toLocaleString()} LDX bloqueados</div>
-      <div class="stake-info">${daysLeft} dias para desbloqueo</div>
-      <div class="stake-info" style="margin-top:8px">Stakeado: ${new Date(p.staking.staked_at).toLocaleDateString('es')}</div>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">${t('reward_multiplier')}</div>
+      <div class="stake-info">${p.staking.amount.toLocaleString()} LDX ${t('locked')}</div>
+      <div class="stake-info">${daysLeft} ${t('days')} ${t('to_unlock')}</div>
+      <div class="stake-info" style="margin-top:8px">${t('staked')}: ${new Date(p.staking.staked_at).toLocaleDateString()}</div>
     </div>`;
   } else {
-    stakeCard.innerHTML = `<div class="stake-title">&#128176; Haz Staking de LDX</div>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Bloquea tokens para ganar multiplicadores de recompensa.</p>
+    stakeCard.innerHTML = `<div class="stake-title">&#128176; ${t('stake_ldx')}</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">${t('stake_desc')}</p>
       <div class="stake-form">
         <div class="stake-row">
-          <input type="number" id="stake-amount" placeholder="Cantidad LDX" min="1">
+          <input type="number" id="stake-amount" placeholder="${t('amount_ldx')}" min="1">
           <select id="stake-days">
-            <option value="7">7 dias (1.30x)</option>
-            <option value="30">30 dias (1.60x)</option>
-            <option value="90">90 dias (2.0x)</option>
-            <option value="365">365 dias (2.0x)</option>
+            <option value="7">7 ${t('days')} (1.30x)</option>
+            <option value="30">30 ${t('days')} (1.60x)</option>
+            <option value="90">90 ${t('days')} (2.0x)</option>
+            <option value="365">365 ${t('days')} (2.0x)</option>
           </select>
         </div>
-        <button class="btn btn-primary btn-block" onclick="handleStake()">Stakear Tokens</button>
+        <button class="btn btn-primary btn-block" onclick="handleStake()">${t('stake_tokens')}</button>
       </div>`;
   }
 }
@@ -2188,14 +2273,14 @@ async function handleStake() {
   const daysEl = document.getElementById('stake-days');
   const days = parseInt(daysEl.value);
   if (!amount || amount < 1) {
-    toast('error', 'Error', 'Ingresa una cantidad valida de LDX');
+    toast('error', 'Error', t('invalid_amount'));
     return;
   }
   try {
     const result = await api('POST', '/staking/stake', { amount, duration_days: days });
     const unlockDate = result.unlock_at ? new Date(result.unlock_at).toLocaleDateString('es') : '';
     const multiplier = result.bonus_multiplier || '';
-    toast('success', 'Staking Exitoso!', `${amount} LDX bloqueados${multiplier ? ' - ' + multiplier + 'x' : ''}`);
+    toast('success', t('staking_success'), `${amount} LDX ${t('locked')}${multiplier ? ' - ' + multiplier + 'x' : ''}`);
     fireConfetti();
     await loadPlayerData();
   } catch (e) {
@@ -2293,9 +2378,473 @@ function escapeHtml(str) {
 }
 
 // ═══════════════════════════════════════════
+//  i18n System
+// ═══════════════════════════════════════════
+const translations = {
+  en: {
+    // Auth
+    auth_sub: 'Your financial adventure starts here. Learn, play, and earn real tokens.',
+    placeholder_wallet: 'Your wallet address',
+    placeholder_username: 'Username',
+    create_account: 'Create Account',
+    sign_in: 'Sign In',
+    have_account: 'Already have an account <span onclick="showLogin()">Sign In</span>',
+    no_account: "Don't have an account <span onclick=\"showRegister()\">Create Account</span>",
+    earn_xp: 'Earn XP',
+    badges: 'Badges',
+    fill_all_fields: 'Please fill in all fields',
+    creating: 'Creating...',
+    welcome_ludex: 'Welcome to Ludex!',
+    adventure_begins: 'Your adventure begins now, {name}',
+    signing_in: 'Signing in...',
+    welcome_back: 'Welcome back!',
+    hello: 'Hello',
+    session_expired: 'Session expired',
+    sign_in_again: 'Please sign in again',
+    // Nav
+    nav_home: 'Home',
+    nav_mentors: 'Mentors',
+    nav_learn: 'Learn',
+    nav_profile: 'Profile',
+    logout: 'Sign Out',
+    logout_btn: '&#128682; Sign Out',
+    // Home
+    keep_learning: 'Keep learning, keep earning',
+    streak_days: 'day streak',
+    daily_challenge: 'Daily Challenge',
+    daily_challenge_desc: 'Complete a challenge today to keep your streak',
+    weekly_goal: '&#127919; Weekly Goal',
+    complete_3_quests: 'Complete 3 quests this week',
+    categories: '&#128218; Categories',
+    recent_activity: '&#9889; Recent Activity',
+    lessons: 'lessons',
+    lesson: 'Lesson',
+    quests_completed: 'quests completed',
+    badges_earned: 'badges earned',
+    day_streak_short: 'day streak',
+    active: 'Active',
+    total: 'Total',
+    reached: 'Reached',
+    level: 'Level',
+    achievement: 'Achievement',
+    complete_quests_activity: 'Complete quests to see your activity here',
+    // Quests
+    quest_sub: 'Test your financial knowledge and earn rewards',
+    featured_quest: 'Featured Quest',
+    all: 'All',
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    no_quests: 'No quests available',
+    generate_ai_challenge: 'Generate an AI challenge!',
+    generate_challenge: '&#9889; Generate AI Challenge',
+    generate_desc: 'AI generates personalized questions for your level',
+    start_challenge: 'Start Challenge',
+    challenge: 'Challenge',
+    generating_questions: 'Generating AI questions...',
+    generating: 'Generating...',
+    generation_error: 'Generation Error',
+    close: 'Close',
+    question: 'Question',
+    of: 'of',
+    see_result: 'See Result',
+    next: 'Next',
+    quest_completed: 'Quest Completed!',
+    xp_earned: 'XP Earned',
+    excellent: 'Excellent!',
+    keep_learning_short: 'Keep learning!',
+    correct: 'correct',
+    streak: 'Streak',
+    days: 'days',
+    continue: 'Continue',
+    // NPCs
+    ai_mentors: '&#128172; AI Mentors',
+    mentor_sub: 'Chat with expert mentors who guide your learning',
+    no_mentors: 'No mentors available',
+    online: 'Online',
+    per_message: 'per message',
+    chat_placeholder: 'Type your question...',
+    i_am: "I'm",
+    your: 'your',
+    ask_me_about: 'Ask me anything about',
+    here_to_help: "I'm here to help!",
+    sug_budget: 'How do I make a budget?',
+    sug_503020: 'What is the 50/30/20 rule?',
+    sug_saving_tips: 'Tips for saving',
+    sug_etf: 'What is an ETF?',
+    sug_start_investing: 'How do I start investing?',
+    sug_diversification: 'What is diversification?',
+    sug_defi: 'What is DeFi?',
+    sug_bitcoin: 'Is Bitcoin safe?',
+    sug_smart_contract: 'What is a smart contract?',
+    sug_credit: 'How do I improve my credit?',
+    sug_apr: 'What is APR?',
+    sug_avalanche: 'Avalanche vs snowball method?',
+    sug_explain_basic: 'Explain something basic',
+    sug_give_advice: 'Give me some advice',
+    // Ranking
+    rank_sub: 'Compete with other players for the top',
+    diamond_league: 'Diamond League',
+    top_players: 'Top Ludex players',
+    weekly: 'Weekly',
+    friends: 'Friends',
+    teams: 'Teams',
+    no_players: 'No players yet. Be the first!',
+    your_position: 'Your current position',
+    to_climb: 'XP to climb to',
+    you_are_first: "You're number one!",
+    members: 'members',
+    no_teams: 'No teams yet',
+    // Learn
+    learning_path: '&#128218; Learning Path',
+    learn_sub: 'Master each category and become a financial expert',
+    lesson_started: 'Lesson started',
+    generating_content: 'Generating content...',
+    // Profile
+    member_since: 'Member since 2026',
+    badge_collection: '&#127941; Badge Collection',
+    to_level: 'to level',
+    total_xp: 'Total XP',
+    earned: 'Earned',
+    // Staking
+    staking_active: 'Active Staking',
+    reward_multiplier: 'Reward Multiplier',
+    locked: 'locked',
+    to_unlock: 'to unlock',
+    staked: 'Staked',
+    stake_ldx: 'Stake LDX',
+    stake_desc: 'Lock tokens to earn reward multipliers.',
+    amount_ldx: 'Amount LDX',
+    stake_tokens: 'Stake Tokens',
+    invalid_amount: 'Enter a valid LDX amount',
+    staking_success: 'Staking Successful!',
+  },
+  es: {
+    auth_sub: 'Tu aventura financiera comienza aqui. Aprende, juega y gana tokens reales.',
+    placeholder_wallet: 'Tu wallet address',
+    placeholder_username: 'Nombre de usuario',
+    create_account: 'Crear Cuenta',
+    sign_in: 'Iniciar Sesion',
+    have_account: 'Ya tengo cuenta <span onclick="showLogin()">Iniciar Sesion</span>',
+    no_account: 'No tengo cuenta <span onclick="showRegister()">Crear Cuenta</span>',
+    earn_xp: 'Gana XP',
+    badges: 'Insignias',
+    fill_all_fields: 'Completa todos los campos',
+    creating: 'Creando...',
+    welcome_ludex: 'Bienvenido a Ludex!',
+    adventure_begins: 'Tu aventura comienza ahora, {name}',
+    signing_in: 'Entrando...',
+    welcome_back: 'Bienvenido de vuelta!',
+    hello: 'Hola',
+    session_expired: 'Sesion expirada',
+    sign_in_again: 'Inicia sesion de nuevo',
+    nav_home: 'Inicio',
+    nav_mentors: 'Mentores',
+    nav_learn: 'Aprender',
+    nav_profile: 'Perfil',
+    logout: 'Cerrar Sesion',
+    logout_btn: '&#128682; Cerrar Sesion',
+    keep_learning: 'Sigue aprendiendo, sigue ganando',
+    streak_days: 'dias de racha',
+    daily_challenge: 'Desafio del Dia',
+    daily_challenge_desc: 'Completa un desafio hoy para mantener tu racha',
+    weekly_goal: '&#127919; Meta Semanal',
+    complete_3_quests: 'Completa 3 quests esta semana',
+    categories: '&#128218; Categorias',
+    recent_activity: '&#9889; Actividad Reciente',
+    lessons: 'lecciones',
+    lesson: 'Leccion',
+    quests_completed: 'quests completadas',
+    badges_earned: 'insignias ganadas',
+    day_streak_short: 'dias de racha',
+    active: 'Activa',
+    total: 'Total',
+    reached: 'Alcanzaste',
+    level: 'Nivel',
+    achievement: 'Logro',
+    complete_quests_activity: 'Completa quests para ver tu actividad aqui',
+    quest_sub: 'Pon a prueba tus conocimientos financieros y gana recompensas',
+    featured_quest: 'Quest Destacada',
+    all: 'Todas',
+    easy: 'Facil',
+    medium: 'Medio',
+    hard: 'Dificil',
+    no_quests: 'No hay quests disponibles',
+    generate_ai_challenge: 'Genera un desafio con IA!',
+    generate_challenge: '&#9889; Generar Desafio con IA',
+    generate_desc: 'La IA genera preguntas personalizadas para tu nivel',
+    start_challenge: 'Iniciar Desafio',
+    challenge: 'Desafio',
+    generating_questions: 'Generando preguntas con IA...',
+    generating: 'Generando...',
+    generation_error: 'Error al generar',
+    close: 'Cerrar',
+    question: 'Pregunta',
+    of: 'de',
+    see_result: 'Ver Resultado',
+    next: 'Siguiente',
+    quest_completed: 'Quest Completada!',
+    xp_earned: 'XP Ganados',
+    excellent: 'Excelente!',
+    keep_learning_short: 'Sigue aprendiendo!',
+    correct: 'correctas',
+    streak: 'Racha',
+    days: 'dias',
+    continue: 'Continuar',
+    ai_mentors: '&#128172; Mentores IA',
+    mentor_sub: 'Chatea con mentores expertos que te guian en tu aprendizaje',
+    no_mentors: 'No hay mentores disponibles',
+    online: 'En linea',
+    per_message: 'por mensaje',
+    chat_placeholder: 'Escribe tu pregunta...',
+    i_am: 'Soy',
+    your: 'tu',
+    ask_me_about: 'Preguntame lo que quieras sobre',
+    here_to_help: 'Estoy aqui para ayudarte!',
+    sug_budget: 'Como hago un presupuesto?',
+    sug_503020: 'Que es la regla 50/30/20?',
+    sug_saving_tips: 'Tips para ahorrar',
+    sug_etf: 'Que es un ETF?',
+    sug_start_investing: 'Como empiezo a invertir?',
+    sug_diversification: 'Que es diversificacion?',
+    sug_defi: 'Que es DeFi?',
+    sug_bitcoin: 'Es seguro Bitcoin?',
+    sug_smart_contract: 'Que es un smart contract?',
+    sug_credit: 'Como mejoro mi credito?',
+    sug_apr: 'Que es un APR?',
+    sug_avalanche: 'Avalancha vs bola de nieve?',
+    sug_explain_basic: 'Explicame algo basico',
+    sug_give_advice: 'Dame un consejo',
+    rank_sub: 'Compite con otros jugadores por la cima',
+    diamond_league: 'Liga Diamante',
+    top_players: 'Top jugadores de Ludex',
+    weekly: 'Semanal',
+    friends: 'Amigos',
+    teams: 'Equipos',
+    no_players: 'No hay jugadores todavia. Se el primero!',
+    your_position: 'Tu posicion actual',
+    to_climb: 'XP para subir al',
+    you_are_first: 'Eres el primero!',
+    members: 'miembros',
+    no_teams: 'No hay equipos todavia',
+    learning_path: '&#128218; Ruta de Aprendizaje',
+    learn_sub: 'Domina cada categoria y conviertete en un experto financiero',
+    lesson_started: 'Leccion iniciada',
+    generating_content: 'Generando contenido...',
+    member_since: 'Miembro desde 2026',
+    badge_collection: '&#127941; Coleccion de Insignias',
+    to_level: 'al nivel',
+    total_xp: 'XP Total',
+    earned: 'Obtenida',
+    staking_active: 'Staking Activo',
+    reward_multiplier: 'Multiplicador de Recompensas',
+    locked: 'bloqueados',
+    to_unlock: 'para desbloqueo',
+    staked: 'Stakeado',
+    stake_ldx: 'Haz Staking de LDX',
+    stake_desc: 'Bloquea tokens para ganar multiplicadores de recompensa.',
+    amount_ldx: 'Cantidad LDX',
+    stake_tokens: 'Stakear Tokens',
+    invalid_amount: 'Ingresa una cantidad valida de LDX',
+    staking_success: 'Staking Exitoso!',
+  },
+  zh: {
+    auth_sub: '\u4F60\u7684\u8CA1\u52D9\u5192\u96AA\u5F9E\u9019\u88E1\u958B\u59CB\u3002\u5B78\u7FD2\u3001\u904A\u73A9\u3001\u8CFA\u53D6\u771F\u5BE6\u4EE3\u5E63\u3002',
+    placeholder_wallet: '\u4F60\u7684\u9322\u5305\u5730\u5740',
+    placeholder_username: '\u7528\u6236\u540D',
+    create_account: '\u5275\u5EFA\u5E33\u6236',
+    sign_in: '\u767B\u5165',
+    have_account: '\u5DF2\u6709\u5E33\u6236 <span onclick="showLogin()">\u767B\u5165</span>',
+    no_account: '\u6C92\u6709\u5E33\u6236 <span onclick="showRegister()">\u5275\u5EFA\u5E33\u6236</span>',
+    earn_xp: '\u8CFA\u53D6 XP',
+    badges: '\u5FB5\u7AE0',
+    fill_all_fields: '\u8ACB\u586B\u5BEB\u6240\u6709\u6B04\u4F4D',
+    creating: '\u5275\u5EFA\u4E2D...',
+    welcome_ludex: '\u6B61\u8FCE\u4F86\u5230 Ludex!',
+    adventure_begins: '\u4F60\u7684\u5192\u96AA\u73FE\u5728\u958B\u59CB\uFF0C{name}',
+    signing_in: '\u767B\u5165\u4E2D...',
+    welcome_back: '\u6B61\u8FCE\u56DE\u4F86!',
+    hello: '\u4F60\u597D',
+    session_expired: '\u5DE5\u4F5C\u968E\u6BB5\u5DF2\u904E\u671F',
+    sign_in_again: '\u8ACB\u91CD\u65B0\u767B\u5165',
+    nav_home: '\u9996\u9801',
+    nav_mentors: '\u5C0E\u5E2B',
+    nav_learn: '\u5B78\u7FD2',
+    nav_profile: '\u500B\u4EBA\u6A94\u6848',
+    logout: '\u767B\u51FA',
+    logout_btn: '&#128682; \u767B\u51FA',
+    keep_learning: '\u7E7C\u7E8C\u5B78\u7FD2\uFF0C\u7E7C\u7E8C\u8CFA\u53D6',
+    streak_days: '\u5929\u9023\u7E8C',
+    daily_challenge: '\u6BCF\u65E5\u6311\u6230',
+    daily_challenge_desc: '\u4ECA\u5929\u5B8C\u6210\u4E00\u500B\u6311\u6230\u4EE5\u4FDD\u6301\u9023\u7E8C',
+    weekly_goal: '&#127919; \u9031\u76EE\u6A19',
+    complete_3_quests: '\u672C\u9031\u5B8C\u6210 3 \u500B\u4EFB\u52D9',
+    categories: '&#128218; \u985E\u5225',
+    recent_activity: '&#9889; \u6700\u8FD1\u6D3B\u52D5',
+    lessons: '\u8AB2\u7A0B',
+    lesson: '\u8AB2\u7A0B',
+    quests_completed: '\u500B\u4EFB\u52D9\u5DF2\u5B8C\u6210',
+    badges_earned: '\u500B\u5FB5\u7AE0\u5DF2\u7372\u5F97',
+    day_streak_short: '\u5929\u9023\u7E8C',
+    active: '\u6D3B\u8E8D',
+    total: '\u7E3D\u8A08',
+    reached: '\u9054\u5230',
+    level: '\u7B49\u7D1A',
+    achievement: '\u6210\u5C31',
+    complete_quests_activity: '\u5B8C\u6210\u4EFB\u52D9\u4EE5\u5728\u6B64\u67E5\u770B\u6D3B\u52D5',
+    quest_sub: '\u6E2C\u8A66\u4F60\u7684\u8CA1\u52D9\u77E5\u8B58\u4E26\u8CFA\u53D6\u734E\u52F5',
+    featured_quest: '\u7CBE\u9078\u4EFB\u52D9',
+    all: '\u5168\u90E8',
+    easy: '\u7C21\u55AE',
+    medium: '\u4E2D\u7B49',
+    hard: '\u56F0\u96E3',
+    no_quests: '\u6C92\u6709\u53EF\u7528\u4EFB\u52D9',
+    generate_ai_challenge: '\u751F\u6210 AI \u6311\u6230!',
+    generate_challenge: '&#9889; \u751F\u6210 AI \u6311\u6230',
+    generate_desc: 'AI \u6839\u64DA\u4F60\u7684\u7B49\u7D1A\u751F\u6210\u500B\u6027\u5316\u554F\u984C',
+    start_challenge: '\u958B\u59CB\u6311\u6230',
+    challenge: '\u6311\u6230',
+    generating_questions: '\u6B63\u5728\u7528 AI \u751F\u6210\u554F\u984C...',
+    generating: '\u751F\u6210\u4E2D...',
+    generation_error: '\u751F\u6210\u932F\u8AA4',
+    close: '\u95DC\u9589',
+    question: '\u554F\u984C',
+    of: '/',
+    see_result: '\u67E5\u770B\u7D50\u679C',
+    next: '\u4E0B\u4E00\u984C',
+    quest_completed: '\u4EFB\u52D9\u5B8C\u6210!',
+    xp_earned: '\u7372\u5F97 XP',
+    excellent: '\u592A\u68D2\u4E86!',
+    keep_learning_short: '\u7E7C\u7E8C\u5B78\u7FD2!',
+    correct: '\u6B63\u78BA',
+    streak: '\u9023\u7E8C',
+    days: '\u5929',
+    continue: '\u7E7C\u7E8C',
+    ai_mentors: '&#128172; AI \u5C0E\u5E2B',
+    mentor_sub: '\u8207\u5C08\u5BB6\u5C0E\u5E2B\u804A\u5929\uFF0C\u6307\u5C0E\u4F60\u7684\u5B78\u7FD2',
+    no_mentors: '\u6C92\u6709\u53EF\u7528\u5C0E\u5E2B',
+    online: '\u5728\u7DDA',
+    per_message: '\u6BCF\u689D\u6D88\u606F',
+    chat_placeholder: '\u8F38\u5165\u4F60\u7684\u554F\u984C...',
+    i_am: '\u6211\u662F',
+    your: '\u4F60\u7684',
+    ask_me_about: '\u554F\u6211\u4EFB\u4F55\u95DC\u65BC',
+    here_to_help: '\u6211\u5728\u9019\u88E1\u5E6B\u52A9\u4F60!',
+    sug_budget: '\u5982\u4F55\u5236\u5B9A\u9810\u7B97?',
+    sug_503020: '\u4EC0\u9EBC\u662F 50/30/20 \u898F\u5247?',
+    sug_saving_tips: '\u5132\u84C4\u6280\u5DE7',
+    sug_etf: '\u4EC0\u9EBC\u662F ETF?',
+    sug_start_investing: '\u5982\u4F55\u958B\u59CB\u6295\u8CC7?',
+    sug_diversification: '\u4EC0\u9EBC\u662F\u5206\u6563\u6295\u8CC7?',
+    sug_defi: '\u4EC0\u9EBC\u662F DeFi?',
+    sug_bitcoin: '\u6BD4\u7279\u5E63\u5B89\u5168\u55CE?',
+    sug_smart_contract: '\u4EC0\u9EBC\u662F\u667A\u80FD\u5408\u7D04?',
+    sug_credit: '\u5982\u4F55\u6539\u5584\u6211\u7684\u4FE1\u7528?',
+    sug_apr: '\u4EC0\u9EBC\u662F APR?',
+    sug_avalanche: '\u96EA\u5D29\u6CD5 vs \u96EA\u7403\u6CD5?',
+    sug_explain_basic: '\u89E3\u91CB\u4E00\u4E9B\u57FA\u672C\u6982\u5FF5',
+    sug_give_advice: '\u7D66\u6211\u4E00\u4E9B\u5EFA\u8B70',
+    rank_sub: '\u8207\u5176\u4ED6\u73A9\u5BB6\u7AF6\u722D\u69AE\u9996',
+    diamond_league: '\u947D\u77F3\u806F\u8CFD',
+    top_players: 'Ludex \u9802\u5C16\u73A9\u5BB6',
+    weekly: '\u6BCF\u9031',
+    friends: '\u670B\u53CB',
+    teams: '\u5718\u968A',
+    no_players: '\u9084\u6C92\u6709\u73A9\u5BB6\u3002\u6210\u70BA\u7B2C\u4E00\u500B!',
+    your_position: '\u4F60\u7684\u7576\u524D\u4F4D\u7F6E',
+    to_climb: 'XP \u624D\u80FD\u5347\u5230',
+    you_are_first: '\u4F60\u662F\u7B2C\u4E00\u540D!',
+    members: '\u6210\u54E1',
+    no_teams: '\u9084\u6C92\u6709\u5718\u968A',
+    learning_path: '&#128218; \u5B78\u7FD2\u8DEF\u5F91',
+    learn_sub: '\u638C\u63E1\u6BCF\u500B\u985E\u5225\uFF0C\u6210\u70BA\u8CA1\u52D9\u5C08\u5BB6',
+    lesson_started: '\u8AB2\u7A0B\u5DF2\u958B\u59CB',
+    generating_content: '\u751F\u6210\u5167\u5BB9\u4E2D...',
+    member_since: '\u6210\u54E1\u81EA 2026',
+    badge_collection: '&#127941; \u5FB5\u7AE0\u6536\u85CF',
+    to_level: '\u5230\u7B49\u7D1A',
+    total_xp: '\u7E3D XP',
+    earned: '\u5DF2\u7372\u5F97',
+    staking_active: '\u8CEA\u62BC\u6D3B\u8E8D',
+    reward_multiplier: '\u734E\u52F5\u4E58\u6578',
+    locked: '\u5DF2\u9396\u5B9A',
+    to_unlock: '\u89E3\u9396',
+    staked: '\u5DF2\u8CEA\u62BC',
+    stake_ldx: '\u8CEA\u62BC LDX',
+    stake_desc: '\u9396\u5B9A\u4EE3\u5E63\u4EE5\u7372\u5F97\u734E\u52F5\u4E58\u6578\u3002',
+    amount_ldx: '\u6578\u91CF LDX',
+    stake_tokens: '\u8CEA\u62BC\u4EE3\u5E63',
+    invalid_amount: '\u8ACB\u8F38\u5165\u6709\u6548\u7684 LDX \u6578\u91CF',
+    staking_success: '\u8CEA\u62BC\u6210\u529F!',
+  }
+};
+
+let currentLang = localStorage.getItem('ldx_lang') || 'en';
+
+function t(key) {
+  return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key;
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val) el.innerHTML = val;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const val = t(key);
+    if (val) el.placeholder = val;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    const val = t(key);
+    if (val) el.innerHTML = val;
+  });
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('ldx_lang', lang);
+  CATS = CATS_I18N[lang] || CATS_I18N.en;
+  MASTERY_LEVELS = MASTERY_I18N[lang] || MASTERY_I18N.en;
+  ALL_BADGES = BADGES_I18N[lang] || BADGES_I18N.en;
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : lang;
+  applyI18n();
+  // Update lang selector
+  const labels = { en: 'English', es: 'Espa\u00F1ol', zh: '\u4E2D\u6587' };
+  document.getElementById('lang-current').textContent = labels[lang] || 'English';
+  document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+  document.getElementById('lang-dropdown').classList.remove('open');
+  // Re-render dynamic content
+  if (state.player) {
+    renderHome();
+    renderProfile();
+    renderQuests();
+    renderNpcs();
+    renderLeaderboard();
+    renderLearnTab();
+  }
+}
+
+function toggleLangDropdown() {
+  document.getElementById('lang-dropdown').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#lang-selector')) {
+    document.getElementById('lang-dropdown').classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════
 //  Init
 // ═══════════════════════════════════════════
 (function init() {
+  // Apply saved language
+  const savedLang = localStorage.getItem('ldx_lang') || 'en';
+  if (savedLang !== 'en') setLanguage(savedLang);
+  else applyI18n();
+
   if (state.token && state.wallet) {
     enterApp();
   } else {

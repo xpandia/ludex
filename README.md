@@ -35,7 +35,7 @@ Pass challenges to earn XP and LDX tokens. Level up, unlock badges, climb the le
 |---|---|
 | **Blockchain** | OneChain (Move) -- single comprehensive smart contract (`ludex_game.move`, 878 lines) covering LDX token, player profiles, quests, badges, staking, leaderboard, teams |
 | **Backend** | Python / FastAPI -- 21 REST endpoints, JWT authentication, SQLite persistence (WAL mode, 8 tables), seed data |
-| **Frontend** | Vanilla HTML / CSS / JS -- premium landing page (`index.html`) with animations and live backend data + 5-tab game app (`app.html`) with quests, NPC chat, leaderboard, profile |
+| **Frontend** | Vanilla HTML / CSS / JS -- premium landing page (`index.html`) with animations and live backend data + 5-tab game app (`app.html`) with quests, NPC chat, leaderboard, profile. Multi-language support (English, Spanish, Traditional Chinese) with localStorage persistence. |
 | **AI** | Claude API (Anthropic) -- 4 NPC mentors with adaptive dialogue, AI-generated quiz challenges, fallback responses for offline mode |
 
 ### Architecture
@@ -78,7 +78,7 @@ A single comprehensive contract (`ludex_game.move`) that handles:
 | 5 seeded quests | Pre-built challenges across financial categories |
 | AI quiz generation | Claude generates multiple-choice questions tailored to player level |
 | 4 AI NPC mentors | Professor Luna (budgeting), Trader Rex (investing), Crypto Sage (DeFi), Credit Fox (credit) |
-| 6 financial categories | Presupuesto, Inversiones, Ahorro, Credito, Crypto, Impuestos |
+| 6 financial categories | Budgeting, Investing, Saving, Credit, Crypto, Taxes |
 | 23-lesson curriculum | Structured learning path from basics to advanced |
 | 12 badge rules | Automatic badges for milestones (quests, streaks, levels, categories) |
 | Leaderboard | Podium (top 3) + ranked list with "TU" badge for current player |

@@ -10,7 +10,7 @@
 
 ### Ludex -- Play-to-Learn GameFi for Financial Literacy on OneChain
 
-**Tagline:** Aprende jugando. Gana viviendo. (Learn by playing. Earn by living.)
+**Tagline:** Learn by Playing. Earn by Living.
 
 **Problem**
 
@@ -137,7 +137,7 @@ This is Ludex -- Play-to-Learn GameFi for financial literacy, built on OneChain.
 
 ### [0:50 - 1:30] THE QUEST -- AI-Generated Challenge
 
-> *Tap Quests tab. Open a quest. Click "Generar Desafio".*
+> *Tap Quests tab. Open a quest. Click "Start Challenge".*
 
 "Let me take a budgeting quest. The AI generates a quiz tailored to my level."
 
@@ -177,7 +177,7 @@ This is Ludex -- Play-to-Learn GameFi for financial literacy, built on OneChain.
 
 "We sit at the intersection of EdTech and GameFi -- two markets worth $21 billion and growing. Nobody owns that intersection.
 
-Ludex. Aprende jugando. Gana viviendo. Play to learn. Earn to grow.
+Ludex. Learn by Playing. Earn by Living. Play to learn. Earn to grow.
 
 Thank you."
 

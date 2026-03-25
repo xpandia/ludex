@@ -1,5 +1,5 @@
 # LUDEX -- Pitch Deck
-### Aprende jugando. Gana viviendo.
+### Learn by Playing. Earn by Living.
 #### OneHack 3.0 | AI & GameFi Edition
 
 ---
@@ -12,7 +12,7 @@ Today, 200 million young people across Latin America are being told a story abou
 
 We are here to change the story.
 
-**LUDEX** -- Aprende jugando. Gana viviendo.
+**LUDEX** -- Learn by Playing. Earn by Living.
 
 ---
 
@@ -50,12 +50,12 @@ It is already a game. Nobody just built it yet.
 **Ludex is a GameFi platform where every quest teaches a real financial concept and every achievement earns real on-chain rewards.**
 
 Players enter an interactive financial education app with quests across six categories:
-- **Presupuesto** -- Budgeting frameworks, the 50/30/20 rule, expense tracking
-- **Inversiones** -- Asset allocation, compound interest, diversification
-- **Ahorro** -- Savings strategies, emergency funds, goal-based saving
-- **Credito** -- Credit scores, debt management, responsible borrowing
+- **Budgeting** -- Budgeting frameworks, the 50/30/20 rule, expense tracking
+- **Investing** -- Asset allocation, compound interest, diversification
+- **Saving** -- Savings strategies, emergency funds, goal-based saving
+- **Credit** -- Credit scores, debt management, responsible borrowing
 - **Crypto** -- Blockchain basics, DeFi fundamentals, wallet security
-- **Impuestos** -- Tax planning, civic obligations, deductions
+- **Taxes** -- Tax planning, civic obligations, deductions
 
 Four AI-powered NPC mentors (Claude by Anthropic) adapt every conversation to the player's level. No two learning paths are the same.
 
@@ -71,7 +71,7 @@ Four AI-powered NPC mentors (Claude by Anthropic) adapt every conversation to th
 
 A player opens a quest on budgeting. An AI-generated challenge appears -- multiple-choice questions tailored to their level. They answer, pass the challenge, and earn XP and token rewards. Confetti rains down.
 
-Then they open a chat with Professor Luna, an AI owl mentor. They ask about the 50/30/20 rule. Luna explains it in conversational Spanish, adapting to their knowledge level.
+Then they open a chat with Professor Luna, an AI owl mentor. They ask about the 50/30/20 rule. Luna explains it conversationally, adapting to their knowledge level.
 
 Their name climbs the leaderboard. A badge is earned.
 
@@ -196,7 +196,7 @@ They deserve a world where learning feels like playing and progress pays real di
 
 **Ludex is that world.**
 
-Aprende jugando. Gana viviendo.
+Learn by Playing. Earn by Living.
 
 ---
 
