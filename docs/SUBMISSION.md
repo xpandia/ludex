@@ -1,4 +1,4 @@
-# LUDEX -- OneHack 3.0 Submission Package
+# LUDEX -- OneHack 3.0 Submission
 ### DoraHacks BUIDL Submission | AI & GameFi Track
 ### Deadline: March 27, 2026
 
@@ -12,48 +12,65 @@
 
 **Tagline:** Learn by Playing. Earn by Living.
 
-**Problem**
+**The Problem**
 
-Over 200 million young people across Latin America lack access to meaningful financial education. According to the S&P Global Financial Literacy Survey, 65% of adults in the region cannot answer basic financial literacy questions. Youth unemployment sits at 23% -- the highest in the world. Traditional financial education relies on textbooks nobody reads, courses nobody finishes, and lessons nobody remembers. Meanwhile, these same young people spend 3+ hours per day gaming. The gap between what they need to learn and how they want to learn it is massive and growing.
+Over 200 million young people across Latin America lack access to meaningful financial education. The S&P Global Financial Literacy Survey shows that 65% of adults in the region cannot answer basic questions about compound interest or inflation. Youth unemployment sits at 23%, the highest in the world. Traditional approaches -- textbooks, PDFs, mandatory courses -- have a completion rate under 5%. Meanwhile, these same young people spend 3+ hours per day gaming. The gap between what they need to learn and how they want to learn it is massive.
 
-**Solution**
+**What We Built**
 
-Ludex is a Play-to-Learn GameFi platform built on OneChain where every quest teaches a real financial concept and every achievement earns real on-chain rewards. Players open an interactive web app with quests across six financial categories: budgeting, investing, saving, credit, crypto, and taxes. Four AI-powered NPC mentors -- Professor Luna, Trader Rex, Crypto Sage, and Credit Fox -- built on Anthropic's Claude API, adapt every conversation to the player's knowledge level, creating personalized learning paths through narrative coaching.
+Ludex is a working Play-to-Learn GameFi platform on OneChain where every quest teaches a real financial concept and every achievement earns on-chain rewards. Here is what is functional and demo-ready today:
 
-The core loop is simple: Play, Learn, Earn. Accept quests, pass AI-generated quiz challenges, earn XP, level up, collect achievement badges, and receive LDX token rewards -- all designed to be recorded immutably on OneChain as verifiable soulbound credentials.
+- **21-endpoint REST API** (FastAPI/Python) with JWT authentication, SQLite persistence across 8 tables, and full game loop
+- **5 seeded quests** covering budgeting, investing, saving, credit, and crypto -- each with 3 expert-written quiz questions
+- **4 AI NPC mentors** (Professor Luna, Trader Rex, Crypto Sage, Credit Fox) powered by Claude API with 20 pre-written fallback responses for offline operation
+- **AI challenge generation engine** that creates contextual multiple-choice quizzes tailored to player level and category
+- **6-category curriculum** with 23 lesson modules spanning the 50/30/20 rule to advanced DeFi strategies
+- **12 automatic badge rules** awarding achievements for quests, streaks, levels, staking, and social activity
+- **Staking system** with graduated multipliers (1.2x to 2.0x) based on lock duration
+- **Real-time leaderboard** ranked by level and XP with badge counts
+- **Team system** supporting up to 5 members with aggregated XP tracking
+- **Premium landing page** with particle animations, interactive NPC avatars, curriculum showcase, and live leaderboard data from the backend
+- **5-tab game app** with dashboard, quests, NPC chat, rankings, and profile/staking
+- **878-line Move smart contract** for OneChain covering LDX token, player profiles, quests, badges, staking, leaderboard, teams, and admin controls
 
-**What We Built (Hackathon Deliverables)**
+**How the Demo Works**
 
-- **Premium landing page** (`index.html`): Dark theme with particle animations, custom cursor, interactive NPC avatars, curriculum showcase with 6 categories and 23 lessons, live leaderboard from backend, and working registration form.
-- **5-tab game app** (`app.html`): Home dashboard (player card, XP, streak, category grid), Quests (5 seeded quests with AI-generated challenges), NPCs (4 AI mentors with full chat interface), Ranking (podium leaderboard), Profile (badges, curriculum progress, staking).
-- **FastAPI backend** (`server.py`): 21 REST endpoints, JWT authentication, SQLite persistence (8 tables, WAL mode), 5 seeded quests, 12 automatic badge rules, Claude API integration with fallback responses, daily XP caps.
-- **Move smart contract** (`ludex_game.move`): 878 lines covering LDX token, player profiles, quests, badges, staking, leaderboard, teams, and admin controls.
-- **Pitch materials**: Interactive HTML pitch deck, investor brief, demo script, video storyboard.
+1. Player registers with a wallet address and username -- receives a JWT
+2. Dashboard shows level, XP, streak, and 6 financial category cards
+3. Player accepts a quest, answers AI-generated quiz questions (60% pass threshold)
+4. Correct answers award XP (with streak/difficulty/perfect-score bonuses) and LDX tokens
+5. System checks 12 badge rules and awards any newly earned achievements
+6. Player chats with AI NPC mentors who adapt to their level and earn bonus XP (capped at 100/day)
+7. Leaderboard updates in real-time after every XP change
+8. Player can stake LDX tokens for reward multipliers on future quests
+
+Every feature above runs without external API keys. The AI features gracefully fall back to curated template responses when Claude API is unavailable.
 
 **OneChain Integration**
 
-Our smart contract (`ludex_game.move`) is a comprehensive Move module targeting OneChain that handles:
+Our smart contract (`src/contracts/ludex_game.move`) is a comprehensive Move module targeting OneChain:
 
-- **LDX Token (Fungible Token):** Custom token with admin-controlled mint, burn, and freeze capabilities. Used as the reward currency throughout the game. 8 decimal places, monitored supply.
-- **Player Profiles:** On-chain registration with XP tracking, leveling (up to level 100), daily streaks, and team membership.
-- **Quest System:** Admin-created quests across 6 financial categories (budgeting, investing, saving, credit, crypto, taxes) with configurable difficulty, XP rewards, token rewards, level requirements, expiration, and daily/team flags.
-- **NFT Achievement Badges:** Template-based badge system with 5 rarity tiers (common through legendary) and eligibility checks based on player level and quest completion count. Badges function as soulbound credentials verifying financial literacy competence.
-- **Staking Mechanism:** Players lock LDX tokens for graduated reward multipliers (1.2x to 2x based on lock duration). Minimum 24-hour stake period. Stakers earn a 5% reward on unstake plus ongoing quest reward multipliers.
-- **On-Chain Leaderboard:** Sorted by XP and level, capped at 100 entries, with seasonal resets every 30 days.
-- **Teams and Social Features:** On-chain team creation (max 5 members), membership tracking, team XP aggregation, and friend lists.
-- **Pause Mechanism:** Admin can pause all player-facing operations for maintenance or emergencies.
+| Feature | Implementation |
+|---|---|
+| LDX Token | Fungible token with admin mint/burn/freeze, 8 decimals |
+| Player Profiles | On-chain registration, XP tracking, leveling (up to 100), streaks |
+| Quest System | 6 categories, configurable difficulty/rewards/expiration/daily flags |
+| NFT Badges | Template-based with 5 rarity tiers, soulbound credentials |
+| Staking | Lock LDX for 1.2x-2.0x multipliers, 5% unstake reward |
+| Leaderboard | Top 100 by XP, 30-day seasonal resets |
+| Teams | On-chain creation, max 5 members, aggregated XP |
 
-The contract uses OneChain's Move framework, importing from `aptos_framework` for coin operations, account management, event handling, and table storage. All player actions emit on-chain events for transparency and auditability.
+The backend follows an **oracle pattern**: FastAPI validates quiz answers off-chain, then calls the smart contract to record only verified achievements on-chain. This keeps AI and game logic performant while ensuring immutable, verifiable credentials.
 
-The backend follows an oracle pattern: the FastAPI server validates quiz answers and player achievements off-chain, then calls the smart contract to record verified results on-chain. This keeps AI and game logic off-chain for performance while ensuring only proven achievements are immutably recorded.
+The contract uses OneChain's Move framework, importing `aptos_framework::coin`, `aptos_framework::account`, `aptos_framework::event`, `aptos_framework::table`, and `std::timestamp` for time-based logic.
 
 **AI Integration**
 
-The backend integrates Claude API (Anthropic) for two core functions:
+Two AI-powered systems, both with offline fallbacks:
 
-1. **AI NPC Dialogue System:** Four distinct NPC personas (Professor Luna -- budgeting owl, Trader Rex -- investing bull, Crypto Sage -- DeFi wizard, Credit Fox -- credit strategist) each with unique personalities and specialties. Conversations maintain context, adapt difficulty based on player level, and weave financial concepts into narrative coaching. Claude's constitutional AI ensures all content remains educational, age-appropriate, and financially accurate. Fallback system provides 20 pre-written responses (5 per NPC) when Claude is unavailable.
+1. **NPC Dialogue System:** 4 personas with unique personalities/specialties. Conversations maintain history, adapt to player level, and weave financial concepts into coaching. Keyword-matched fallback responses ensure the demo works without an API key.
 
-2. **Challenge Generation Engine:** AI generates contextual multiple-choice quizzes tailored to the player's level, category, and difficulty. Questions are grounded in a structured curriculum spanning 6 categories and 23 lesson modules covering topics from the 50/30/20 rule to advanced DeFi strategies.
+2. **Challenge Generation Engine:** Generates multiple-choice quizzes using the 23-lesson curriculum as context. Falls back to 18 expert-written template questions (3 per category) when offline.
 
 **Technical Architecture**
 
@@ -68,25 +85,48 @@ Player (Browser) --> Landing Page (index.html) --> Game App (app.html)
                     (AI NPCs, quizzes)   ludex_game.move
 ```
 
-- Frontend: Vanilla HTML/CSS/JS -- premium landing page with particle animations, custom cursor, live backend data + 5-tab mobile-first game app with skeleton loaders, toast notifications, and confetti effects
-- Backend: Python/FastAPI with JWT authentication, SQLite (WAL mode, 8 tables), seed data, and comprehensive REST API (21 endpoints)
-- Blockchain: Single comprehensive Move contract (878 lines) covering all game logic
-- AI: Anthropic Claude API with persona-based system prompts, conversation history tracking, adaptive difficulty, and offline fallback
+- Frontend: Vanilla HTML/CSS/JS with particle animations, skeleton loaders, confetti effects, and toast notifications
+- Backend: Python 3.11+ / FastAPI, JWT auth, SQLite WAL mode, 8 tables, 21 endpoints
+- Blockchain: Move smart contract (878 lines) covering all on-chain game logic
+- AI: Anthropic Claude with persona prompts, conversation history, and offline fallback
+
+**How to Run the Demo**
+
+```bash
+# 1. Clone and set up
+git clone https://github.com/xpandia/ludex.git
+cd ludex/src/backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Start the server (creates DB and seeds 5 quests automatically)
+python server.py
+
+# 3. Seed demo data (8 players, completions, badges, team, chat history)
+python seed_demo.py
+
+# 4. Restart the server to pick up seeded data
+python server.py
+
+# 5. In a new terminal, serve the frontend
+cd ludex/src/frontend
+python3 -m http.server 3000
+
+# 6. Open in browser
+# Landing page: http://localhost:3000/index.html
+# Game app:     http://localhost:3000/app.html
+# API docs:     http://localhost:8000/docs
+```
+
+No API keys required. All features work with built-in fallback responses.
 
 **Business Model**
 
-Three revenue streams aligned with the mission: (1) In-game cosmetic purchases and seasonal passes; (2) B2B/B2G educational licenses for schools, universities, and governments; (3) On-chain transaction fees on reward distributions and credential verification.
+Three revenue streams: (1) In-game cosmetic purchases and seasonal passes; (2) B2B/B2G educational licenses for schools and governments; (3) On-chain transaction fees on reward distributions and credential verification.
 
 **Team**
 
-A multidisciplinary team combining product design, blockchain development (Move on OneChain), full-stack engineering (Python/FastAPI), and AI integration (Claude API). We are builders from Latin America who know the problem because we lived it.
-
-**Roadmap**
-
-- Hackathon: Core loop with 5 quests, 4 AI NPCs, quiz challenges, leaderboard, badges, staking
-- Month 1: Smart contract deployment on testnet, wallet integration (Petra/Martian), mobile PWA
-- Month 3: Public beta in Colombia and Mexico, school partnerships
-- Month 6: Full launch, DAO governance for curriculum updates, 50K players
+Builders from Latin America who know this problem because we lived it. Product design, Move development, full-stack engineering, and AI integration.
 
 **Links**
 
@@ -101,255 +141,145 @@ A multidisciplinary team combining product design, blockchain development (Move 
 
 ### Setup Checklist (Before Recording)
 
-1. Backend server running (`uvicorn server:app --reload --port 8000`)
-2. Landing page open in browser (serve `src/frontend/index.html` via `python3 -m http.server 3000` from `src/frontend/`)
-3. Game app ready (`http://localhost:3000/app.html`)
-4. 2-3 players already registered so leaderboard has data
-5. Screen recording software ready (1080p minimum, mic on)
+1. Backend server running (`python server.py` from `src/backend/`)
+2. Demo data seeded (`python seed_demo.py`)
+3. Server restarted after seeding
+4. Frontend served (`python3 -m http.server 3000` from `src/frontend/`)
+5. Landing page open: `http://localhost:3000/index.html`
+6. Screen recording software ready (1080p, mic on)
 
 ---
 
 ### [0:00 - 0:20] THE HOOK -- Landing Page
 
-> *Screen: Ludex landing page, particles animating in background, custom cursor visible.*
+> *Screen: Ludex landing page, particles animating, custom cursor visible.*
 
-"Right now, 200 million young people in Latin America cannot answer a basic question about compound interest. Traditional education has failed them. Textbooks, PDFs, forty-minute lectures -- nobody finishes those.
-
-But you know what they do finish? Games. Quests. Leaderboards.
+"200 million young people in Latin America cannot answer a basic question about compound interest. Textbooks have a 5% completion rate. Games have a 70% daily return rate.
 
 This is Ludex -- Play-to-Learn GameFi for financial literacy, built on OneChain."
 
-> *Scroll through the landing page. Show the NPC avatars, the curriculum tabs, the live leaderboard. Stop at the registration form.*
+> *Scroll through landing page. Show NPC avatars, curriculum tabs, live leaderboard.*
 
 ---
 
 ### [0:20 - 0:50] THE APP -- Registration & Dashboard
 
-> *Register a new player from the landing page. App redirects to app.html.*
+> *Register a new player. App redirects to app.html.*
 
-"I register with a wallet address and username. Now I am in the app."
+"I register with a wallet address and username. JWT authentication, instant access."
 
-> *Show the Home tab: player card with level, XP bar, streak. Scroll to show 6 category cards.*
+> *Show Home tab: player card, XP bar, streak, 6 category cards.*
 
-"My dashboard shows my level, XP, streak, and six financial categories -- budgeting, investing, saving, credit, crypto, and taxes."
+"My dashboard: level, XP, streak, and six financial categories -- budgeting, investing, saving, credit, crypto, and taxes."
 
 ---
 
 ### [0:50 - 1:30] THE QUEST -- AI-Generated Challenge
 
-> *Tap Quests tab. Open a quest. Click "Start Challenge".*
+> *Tap Quests tab. Open a quest. Click Start Challenge.*
 
-"Let me take a budgeting quest. The AI generates a quiz tailored to my level."
+"I take a budgeting quest. Three questions about the 50/30/20 rule, zero-based budgeting, needs versus wants."
 
-> *Answer the multiple-choice questions. Submit. Show results with confetti and XP earned.*
+> *Answer questions. Submit. Show confetti and XP earned.*
 
-"Three questions, generated by Claude in real-time. I passed -- 150 XP earned, tokens rewarded."
+"Passed with 100%. 62 XP earned with a perfect-score bonus, plus 10 LDX tokens. My first badge -- 'First Steps' -- just unlocked."
 
 ---
 
 ### [1:30 - 2:00] THE AI -- NPC Chat
 
-> *Tap NPCs tab. Open Professor Luna. Send a message about budgeting.*
+> *Tap NPCs tab. Open Professor Luna. Ask about budgeting.*
 
-"Professor Luna is one of four AI mentors powered by Claude. Each has a unique personality and specialty."
+"Professor Luna is one of four AI mentors. Each has a unique personality and specialty."
 
-> *Show the AI response appearing with typing indicator.*
+> *Show response appearing. Point out XP earned from chat.*
 
-"She adapts to my level, explains concepts conversationally, and stays in character. Every chat earns XP."
+"She explains compound interest conversationally and earns me 5 XP. All four NPCs work without an API key using curated fallback responses."
 
 ---
 
-### [2:00 - 2:30] LEADERBOARD, PROFILE & SMART CONTRACT
+### [2:00 - 2:30] LEADERBOARD, STAKING & SMART CONTRACT
 
-> *Show Ranking tab with podium and ranked list. Then Profile tab with badges and curriculum progress.*
+> *Show Ranking tab with 8 players ranked. Then Profile tab with badges and staking.*
 
-"The leaderboard ranks all players. My profile tracks badges, curriculum progress, and stats."
+"The leaderboard has 8 players competing. My profile tracks badges, curriculum progress, and staking."
 
-> *Quick cut to Move contract code in an editor -- scroll through key sections.*
+> *Quick cut to Move contract in editor.*
 
-"Under the hood: 878 lines of Move on OneChain -- LDX token, quests, badges, staking, leaderboard. All designed for on-chain verifiable credentials."
+"878 lines of Move on OneChain: LDX token, quests, badges, staking, leaderboard, teams. Designed as soulbound financial literacy credentials."
 
 ---
 
 ### [2:30 - 3:00] THE CLOSE
 
-> *Return to landing page or pitch slide.*
+> *Return to landing page.*
 
-"We sit at the intersection of EdTech and GameFi -- two markets worth $21 billion and growing. Nobody owns that intersection.
+"EdTech is a $21 billion market. GameFi is a $12 billion market. Nobody owns the intersection.
 
-Ludex. Learn by Playing. Earn by Living. Play to learn. Earn to grow.
+Ludex. 21 API endpoints, 4 AI mentors, 878 lines of Move, 23 lessons, and zero API keys needed to demo.
 
-Thank you."
+Learn by Playing. Earn by Living."
 
-> *Hold on landing page hero. End recording.*
-
----
-
-## 3. OneChain Integration Documentation
+> *Hold on landing page hero. End.*
 
 ---
 
-### 3.1 Smart Contract Overview
+## 3. Screenshots to Capture for Submission
 
-**Contract:** `ludex_game.move`
-**Module:** `ludex::ludex_game`
-**Language:** Move (Aptos-compatible, OneChain)
-**Size:** 878 lines
-**Deployment target:** OneChain Testnet
-
-### 3.2 OneChain Products and Framework Usage
-
-| OneChain / Aptos Framework Module | Usage in Ludex |
-|---|---|
-| `aptos_framework::coin` | LDX token initialization, minting, burning, freezing, deposits, transfers, balance checks |
-| `aptos_framework::managed_coin` | Player registration for LDX token (`register<LudexToken>`) |
-| `aptos_framework::account` | Event handle creation for player activity tracking |
-| `aptos_framework::event` | On-chain event emission (registration, level-ups, quest completion, badges, staking) |
-| `aptos_framework::table` | Storage for quest registry, badge templates, and team registry |
-| `std::timestamp` | Time-based logic: streak tracking, stake lock periods, quest expiration, season timing |
-| `std::signer` | Address extraction and authorization checks |
-| `std::string` | UTF-8 string handling for usernames, quest titles, badge names, image URIs |
-| `std::vector` | Dynamic arrays for leaderboard entries, badges, friends, team members, quest lists |
-| `std::option` | Optional fields (team membership, staking state) |
-
-### 3.3 On-Chain Resources
-
-| Resource | Stored At | Purpose |
-|---|---|---|
-| `GameState` | Admin account | Global stats: total players, quests completed, tokens distributed, pause flag |
-| `TokenCaps` | Admin account | Mint, burn, freeze capabilities for LDX token |
-| `QuestRegistry` | Admin account | All quest definitions with auto-incrementing IDs |
-| `BadgeRegistry` | Admin account | Badge templates with eligibility criteria |
-| `Leaderboard` | Admin account | Top 100 players, seasonal with 30-day periods |
-| `TeamRegistry` | Admin account | Teams with members and aggregated XP |
-| `PlayerState` | Player account | Individual profile, badges, quest progress, staking info, friends, event handle |
-
-### 3.4 Entry Functions (Transactions)
-
-| Function | Caller | Description |
-|---|---|---|
-| `initialize` | Admin (once) | Bootstrap game: create LDX token, registries, leaderboard |
-| `register_player` | Player | Create on-chain profile, register for LDX token |
-| `create_quest` | Admin | Add quest to registry with rewards and requirements |
-| `complete_quest` | Admin/Oracle | Verify and reward quest completion (XP + tokens + streak) |
-| `create_badge_template` | Admin | Define badge with rarity, level/quest requirements |
-| `award_badge` | Admin/Oracle | Mint badge to player after eligibility check |
-| `stake_tokens` | Player | Lock LDX for reward multiplier (1.2x-2x) |
-| `unstake_tokens` | Admin | Return staked tokens + 5% reward after lock period |
-| `update_leaderboard` | Anyone | Refresh player's leaderboard position |
-| `new_season` | Admin | Reset leaderboard, start new 30-day season |
-| `set_paused` | Admin | Pause/unpause all player-facing operations |
-| `create_team` | Player | Create team, become leader |
-| `join_team` | Player | Join existing team (max 5 members) |
-| `add_friend` | Player | Add another registered player as friend |
-
-### 3.5 View Functions (Read-Only)
-
-| Function | Returns |
-|---|---|
-| `get_player_profile` | Full player profile (XP, level, streak, team) |
-| `get_player_level` | Current level |
-| `get_player_xp` | Current XP |
-| `get_xp_to_next_level` | XP needed for next level |
-| `get_player_badges` | All earned badges |
-| `get_player_streak` | Current daily streak |
-| `get_quest` | Quest details by ID |
-| `get_stake_info` | Staking state (amount, unlock time, multiplier) |
-| `get_game_stats` | Global stats (players, quests, tokens) |
-
-### 3.6 Token Economics (LDX)
-
-- **Name:** Ludex Token
-- **Symbol:** LDX
-- **Decimals:** 8
-- **Base reward per quest:** 10,000,000 units (10 LDX)
-- **Staking multiplier range:** 1.2x (1 week) to 2.0x (8+ weeks)
-- **Staking reward on unstake:** 5% of staked amount
-- **Streak bonus:** 5% XP per streak day, capped at 50%
-- **Team bonus constant:** 10% (reserved for team quest rewards)
-
-### 3.7 Backend-to-Chain Integration Pattern
-
-The FastAPI backend acts as an oracle between players and the smart contract:
-
-1. Player interacts with AI NPCs and completes quests via the REST API
-2. Backend validates answers, calculates scores, and determines pass/fail (60% threshold)
-3. On pass, backend calls `complete_quest` on-chain as the admin (oracle pattern)
-4. Contract verifies admin authority, checks eligibility, awards XP, mints LDX tokens
-5. Backend calls `award_badge` if milestone thresholds are met (12 automatic rules)
-6. Leaderboard is updated via `update_leaderboard` after state changes
-
-This oracle pattern ensures that only verified achievements are recorded on-chain while keeping the AI and game logic off-chain for performance and cost efficiency.
-
-**Current status:** The backend runs the full game loop off-chain with SQLite persistence. The smart contract is complete and ready for deployment. On-chain integration (backend calling the Move contract via OneChain RPC) is the next development milestone.
+1. **Landing page hero** -- particles, tagline, NPC avatars visible
+2. **Landing page curriculum section** -- 6 category tabs expanded
+3. **Landing page leaderboard** -- live data from backend showing 8+ players
+4. **App: Home tab** -- player card with level, XP bar, streak, category grid
+5. **App: Quest tab** -- quest list showing 5 seeded quests
+6. **App: Quest challenge** -- multiple choice quiz with 4 options
+7. **App: Quest result** -- confetti, XP earned, badge unlocked
+8. **App: NPC chat** -- Professor Luna conversation with response
+9. **App: Ranking tab** -- podium + ranked list with varied levels
+10. **App: Profile tab** -- badges, curriculum progress, staking section
+11. **API docs** -- FastAPI Swagger UI showing all 21 endpoints
+12. **Smart contract** -- editor showing key sections of ludex_game.move
 
 ---
 
 ## 4. Quick Start Commands
 
----
-
 ### Prerequisites
 
 - Python 3.11+
-- Anthropic API key (optional -- AI features fall back to template responses without it)
+- No API keys required (all features have offline fallbacks)
 
-### 4.1 Backend Server
+### Backend + Demo Data
 
 ```bash
-# Navigate to backend
 cd src/backend
-
-# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables
-export LUDEX_ANTHROPIC_API_KEY="your-anthropic-api-key"  # optional
-export LUDEX_DEBUG=true
+# Start server (creates DB, seeds 5 quests)
+python server.py
+# Ctrl+C after it starts
 
-# Start server
-uvicorn server:app --reload --host 0.0.0.0 --port 8000
+# Seed demo data (8 players, badges, completions, team, chat)
+python seed_demo.py
+
+# Restart server with demo data loaded
+python server.py
 ```
 
-Server will be available at `http://localhost:8000`
-API docs at `http://localhost:8000/docs`
-
-### 4.2 Frontend
+### Frontend
 
 ```bash
-# Serve frontend files
 cd src/frontend
 python3 -m http.server 3000
 ```
 
-- Landing page: `http://localhost:3000/index.html`
-- Game app: `http://localhost:3000/app.html`
+### Open
 
-Or open `src/frontend/index.html` and `src/frontend/app.html` directly in a browser.
-
-### 4.3 Pitch Deck
-
-```bash
-# Open pitch deck HTML in browser
-open pitch/pitch_deck.html
-```
-
-### 4.4 All Services at Once (Demo Day)
-
-```bash
-# Terminal 1: Backend
-cd src/backend && source venv/bin/activate && \
-  LUDEX_ANTHROPIC_API_KEY="your-key" uvicorn server:app --reload --port 8000
-
-# Terminal 2: Frontend
-cd src/frontend && python3 -m http.server 3000
-```
-
-Then open `http://localhost:3000/index.html` in browser.
+- Landing page: http://localhost:3000/index.html
+- Game app: http://localhost:3000/app.html
+- API docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
 
 ---
 
@@ -359,14 +289,14 @@ Then open `http://localhost:3000/index.html` in browser.
 - [ ] GitHub repo public at https://github.com/xpandia/ludex
 - [ ] Demo video recorded (max 3 min) -- follow Section 2 script
 - [ ] Demo video uploaded to YouTube/Loom and linked on DoraHacks
+- [ ] 12 screenshots captured (Section 3) and uploaded
 - [x] Smart contract code in repo (`src/contracts/ludex_game.move`)
 - [x] Backend running for demo (`src/backend/server.py`)
+- [x] Demo seed script ready (`src/backend/seed_demo.py`)
 - [x] Landing page accessible (`src/frontend/index.html`)
 - [x] Game app accessible (`src/frontend/app.html`)
-- [x] Pitch deck available (`pitch/pitch_deck.html`)
-- [ ] Team members registered on DoraHacks (max 4, one project per participant)
 - [ ] Track selected: GameFi (primary) + AI (secondary)
 
 ---
 
-*Generated for OneHack 3.0 | AI & GameFi Edition | Deadline: March 27, 2026*
+*Ludex | OneHack 3.0 | AI & GameFi Edition | Deadline: March 27, 2026*

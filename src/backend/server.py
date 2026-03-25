@@ -1291,6 +1291,9 @@ async def submit_quest_answers(quest_id: str, body: QuizAnswer, wallet: str = De
     # Auto-badge checks.
     badges_earned = _check_badge_eligibility(player)
 
+    # Invalidate leaderboard cache so rankings reflect new XP immediately.
+    leaderboard_cache.pop("lb", None)
+
     return {
         "passed": True,
         "score": round(score_pct, 1),
@@ -1660,6 +1663,10 @@ Rules:
     # Save player state and assistant reply
     _db_update_player(player)
     _db_save_chat(wallet, body.npc_id, "assistant", reply)
+
+    # Invalidate leaderboard cache so rankings reflect new XP.
+    if xp_earned > 0:
+        leaderboard_cache.pop("lb", None)
 
     # Suggest relevant actions.
     suggested = _suggest_actions(player, npc)
